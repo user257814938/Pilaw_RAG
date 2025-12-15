@@ -1,6 +1,6 @@
 import { streamText, convertToCoreMessages } from 'ai';
 import { gateway } from '@ai-sdk/gateway'; // Requires @ai-sdk/gateway
-import { getRetriever } from '@/lib/framework_langchain/vector_store';
+import { getRetriever } from '@/lib/framework_langchain/ingest_retrieve';
 
 export const maxDuration = 30;
 

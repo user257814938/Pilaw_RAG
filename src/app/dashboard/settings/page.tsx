@@ -1,14 +1,19 @@
+import { PricingTable } from "@/components/dashboard/settings/pricing";
+
 export default function SettingsPage() {
     return (
-        <div>
-            <h1 className="text-2xl font-bold mb-4">Paramètres</h1>
-            <div className="max-w-xl space-y-6">
-                <div className="p-4 border rounded bg-white dark:bg-neutral-800">
-                    <h3 className="font-semibold mb-2">Abonnement</h3>
-                    <p className="text-sm text-gray-500 mb-4">Gérez votre plan Stripe.</p>
-                    {/* TODO: Stripe Customer Portal Link */}
-                </div>
+        <div className="flex flex-col gap-8 p-4">
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight">Paramètres</h1>
+                <p className="text-muted-foreground">
+                    Gérez vos préférences et votre abonnement.
+                </p>
+            </div>
+
+            <div className="space-y-4">
+                <h2 className="text-xl font-semibold">Abonnement</h2>
+                <PricingTable />
             </div>
         </div>
-    )
+    );
 }

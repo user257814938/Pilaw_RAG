@@ -1,5 +1,37 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## 🗺️ Project Map
+
+### 🔌 API Routes
+| Route | Description | Link |
+|-------|-------------|------|
+| `/api/chat` | AI Chat (streamText/Vercel AI SDK) | [Test](http://localhost:3000/api/chat) |
+| `/api/models` | Dynamic Model Discovery (from Gateway) | [Test](http://localhost:3000/api/models) |
+| `/api/stripe/checkout` | Create Stripe Checkout Session | [Test](http://localhost:3000/api/stripe/checkout) |
+| `/api/ingestion_unstructured` | File Upload & Parsing | [Test](http://localhost:3000/api/ingestion_unstructured) |
+| `/api/connector_nango` | Nango Auth & Session Token | [Test](http://localhost:3000/api/connector_nango) |
+
+### 🪝 Webhooks
+| Route | Description | Link |
+|-------|-------------|------|
+| `/api/webhooks/payment_stripe` | Stripe Events (Checkout, Invoice, Subscription) | [Test](http://localhost:3000/api/webhooks/payment_stripe) |
+| `/api/webhooks/integration_nango` | Nango Sync Events | [Test](http://localhost:3000/api/webhooks/integration_nango) |
+
+### ⏱️ Cron Jobs
+| Route | Description | Link |
+|-------|-------------|------|
+| `/api/cron/queue_upstash_qstash` | Upstash QStash Queue Processing | [Trigger](http://localhost:3000/api/cron/queue_upstash_qstash) |
+
+### 📄 Pages
+| Path | Description | Access |
+|------|-------------|--------|
+| `/dashboard/overview` | Main Dashboard View | [Open](http://localhost:3000/dashboard/overview) |
+| `/dashboard/chat` | AI Chat Interface | [Open](http://localhost:3000/dashboard/chat) |
+| `/dashboard/settings` | Settings & Subscription | [Open](http://localhost:3000/dashboard/settings) |
+| `/dashboard/knowledge` | Knowledge Base & Uploads | [Open](http://localhost:3000/dashboard/knowledge) |
+| `/auth/signin` | Login Page | [Open](http://localhost:3000/auth/signin) |
+| `/auth/signup` | Registration Page | [Open](http://localhost:3000/auth/signup) |
+
 ## Getting Started
 
 First, run the development server:
