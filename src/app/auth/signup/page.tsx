@@ -1,9 +1,11 @@
+import { AuthForm } from '@/components/dashboard/auth_database_supabase/auth_ui';
+
 export default function SignupPage() {
     return (
-        <div className="flex flex-col space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Inscription</h1>
-            <p className="text-sm text-muted-foreground">Créer un nouveau compte</p>
-            {/* Signup form here */}
+        <div className="flex min-h-screen items-center justify-center p-6 md:p-10">
+            <div className="w-full max-w-sm md:max-w-3xl">
+                <AuthForm view="signup" />
+            </div>
         </div>
-    )
+    );
 }

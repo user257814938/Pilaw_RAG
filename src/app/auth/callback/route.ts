@@ -1,6 +1,22 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/database_supabase/server';
+import { cookies } from 'next/headers';
 
 export async function GET(request: Request) {
-    // Logic to exchange code for session (Supabase)
-    return NextResponse.redirect(new URL('/dashboard_routing', request.url))
+    const { searchParams, origin } = new URL(request.url);
+    const code = searchParams.get('code');
+    // if "next" is in param, use it as the redirect URL
+    const next = searchParams.get('next') ?? '/dashboard';
+
+    if (code) {
+        const cookieStore = await cookies();
+        const supabase = createClient(cookieStore);
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!error) {
+            return NextResponse.redirect(`${origin}${next}`);
+        }
+    }
+
+    // return the user to an error page with instructions
+    return NextResponse.redirect(`${origin}/auth/auth-code-error`);
 }
