@@ -5,6 +5,9 @@ import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
 import { existsSync } from "fs";
 import { uploadFileToStorage } from "@/lib/database_supabase/storage";
+import { cookies } from "next/headers";
+import { createClient } from "@/lib/database_supabase/server";
+import { indexDocuments } from "@/lib/framework_langchain/ingest_retrieve";
 
 export async function POST(req: NextRequest) {
     try {
@@ -35,7 +38,7 @@ export async function POST(req: NextRequest) {
         // const filename = `${uuidv4()}-${file.name}`;
         // We use a local filename logic for temp processing
         const tempFilename = `${uuidv4()}-${filename}`;
-        const buffer = Buffer.from(bytes);
+        const buffer = Buffer.from(await file.arrayBuffer());
 
         // Create temp directory if it doesn't exist
         const tempDir = join(process.cwd(), "tmp");
@@ -51,6 +54,12 @@ export async function POST(req: NextRequest) {
             // Process with Unstructured via LangChain Loader
             // Note: We might want to pass the storage URL as metadata later
             const docs = await ingestFile(tempFilePath);
+
+            // 3. Index Documents into Supabase Vector Store (Critical Step!)
+            if (docs.length > 0) {
+                await indexDocuments(docs);
+                console.log(`[Ingest] Indexed ${docs.length} documents.`);
+            }
 
             // Return structured data
             return NextResponse.json({

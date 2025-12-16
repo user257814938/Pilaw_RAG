@@ -18,11 +18,11 @@ export async function signin(formData: FormData) {
     });
 
     if (error) {
-        return redirect('/auth/signin?error=Could not authenticate user');
+        return redirect('/auth_supabase/signin?error=Could not authenticate user');
     }
 
     revalidatePath('/', 'layout');
-    redirect('/dashboard/auth_database_supabase');
+    redirect('/auth_supabase');
 }
 
 export async function signup(formData: FormData) {
@@ -39,16 +39,17 @@ export async function signup(formData: FormData) {
         options: {
             data: {
                 full_name: fullName,
-            }
+            },
+            emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth_supabase/callback`,
         }
     });
 
     if (error) {
-        return redirect('/auth/signup?error=Could not register user');
+        return redirect('/auth_supabase/signup?error=Could not register user');
     }
 
     revalidatePath('/', 'layout');
-    redirect('/dashboard/auth_database_supabase');
+    redirect('/auth_supabase');
 }
 
 export async function signout() {
@@ -62,5 +63,40 @@ export async function signout() {
     }
 
     revalidatePath('/', 'layout');
-    redirect('/auth/signin');
+    redirect('/auth_supabase/signin');
+}
+
+export async function forgotPassword(formData: FormData) {
+    const cookieStore = await cookies();
+    const supabase = await createClient(cookieStore);
+
+    const email = formData.get('email') as string;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth_supabase/callback?next=/auth_supabase/update-password`,
+    });
+
+    if (error) {
+        return redirect('/auth_supabase/forgot-password?error=Could not send reset email');
+    }
+
+    return redirect('/auth_supabase/forgot-password?message=Check your email for the reset link');
+}
+
+export async function updatePassword(formData: FormData) {
+    const cookieStore = await cookies();
+    const supabase = await createClient(cookieStore);
+
+    const password = formData.get('password') as string;
+
+    const { error } = await supabase.auth.updateUser({
+        password: password,
+    });
+
+    if (error) {
+        return redirect('/auth_supabase/update-password?error=Could not update password');
+    }
+
+    revalidatePath('/', 'layout');
+    redirect('/auth_supabase');
 }

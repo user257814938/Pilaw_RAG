@@ -60,14 +60,18 @@ export async function middleware(request: NextRequest) {
 
     // PROTECTED ROUTES LOGIC
     // If user is NOT logged in and tries to access dashboard, redirect to login
+    /* TEMPORARILY DISABLED FOR TESTING
     if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-        return NextResponse.redirect(new URL('/auth/signin', request.url))
+        return NextResponse.redirect(new URL('/auth_supabase/signin', request.url))
     }
+    */
 
     // If user IS logged in and tries to access auth pages, redirect to dashboard
-    if (user && request.nextUrl.pathname.startsWith('/auth')) {
+    /*
+    if (user && request.nextUrl.pathname.startsWith('/auth_supabase')) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
     }
+    */
 
     return response
 }

@@ -1,12 +1,13 @@
 import { Embeddings, EmbeddingsParams } from '@langchain/core/embeddings';
 import { embed, embedMany } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { gateway } from '@ai-sdk/gateway';
 import { SupabaseVectorStore } from '@langchain/community/vectorstores/supabase';
-import { SupabaseHybridSearch } from '@langchain/community/retrievers/supabase';
 import { supabaseAdmin } from '../database_supabase/admin';
 import { createClient } from '../database_supabase/client';
-import { ContextualCompressionRetriever } from "langchain/retrievers/contextual_compression";
-import { cohereReranker } from '@/lib/rerank_cohere';
+import { DEFAULT_EMBEDDING_MODEL_ID } from '../llm_ai-gateway/model_selection';
+// import { ContextualCompressionRetriever } from "langchain/retrievers";
+// import { SupabaseHybridSearch } from "@langchain/community/retrievers/supabase";
+// import { cohereReranker } from '@/lib/rerank_cohere';
 
 /**
  * Custom Embeddings Wrapper for Vercel AI SDK Gateway
@@ -21,7 +22,7 @@ class VercelAIEmbeddings extends Embeddings {
 
     async embedDocuments(documents: string[]): Promise<number[][]> {
         const { embeddings } = await embedMany({
-            model: openai.textEmbeddingModel(this.model),
+            model: gateway.textEmbeddingModel(this.model),
             values: documents,
         });
         return embeddings;
@@ -29,16 +30,17 @@ class VercelAIEmbeddings extends Embeddings {
 
     async embedQuery(document: string): Promise<number[]> {
         const { embedding } = await embed({
-            model: openai.textEmbeddingModel(this.model),
+            model: gateway.textEmbeddingModel(this.model),
             value: document,
         });
         return embedding;
     }
 }
 
+
 // Instantiate the custom embeddings class
 export const embeddings = new VercelAIEmbeddings({
-    model: 'text-embedding-3-large',
+    model: DEFAULT_EMBEDDING_MODEL_ID,
 });
 
 /**
@@ -58,27 +60,59 @@ export async function indexDocuments(docs: any[]) {
 
 /**
  * Returns a Hybrid Retriever enhanced with Cohere Rerank
- * Usage:
- * const retriever = getRetriever();
- * const results = await retriever.invoke("search query");
+ * Manually implemented to avoid dependency on ContextualCompressionRetriever
  */
 export const getRetriever = () => {
     const client = createClient();
 
-    // 1. Base Retriever (Hybrid Search: Vector + Keyword)
-    // We fetch more documents initially (e.g. 10) to let the Reranker filter them down
-    const baseRetriever = new SupabaseHybridSearch(embeddings, {
+    // 1. Initial Hybrid Search Retrieval
+    const store = new SupabaseVectorStore(embeddings, {
         client,
         tableName: "documents",
-        similarityQueryName: "match_documents",
-        keywordQueryName: "kw_match_documents",
-        similarityK: 10,
-        keywordK: 4,
+        queryName: "match_documents",
     });
 
-    // 2. Compression Retriever (Hubrid + Cohere Rerank)
-    return new ContextualCompressionRetriever({
-        baseCompressor: cohereReranker,
-        baseRetriever: baseRetriever,
+    // Use hybrid search options
+    const baseRetriever = store.asRetriever({
+        searchType: "hybrid",
+        k: 10,
+        // @ts-ignore
+        searchKwargs: {
+            keywordCount: 5,
+            vectorCount: 10
+        }
     });
+
+    // 2. Wrap in a Runnable/Function for Reranking
+    // We return an object that mimics the Retriever interface (has an invoke method)
+    return {
+        invoke: async (query: string) => {
+            // A. Fetch initial candidates
+            const docs = await baseRetriever.invoke(query);
+
+            if (docs.length === 0) return [];
+
+            // B. Rerank with Cohere
+            // The rerank method expects documents as objects with pageContent
+            console.log(`[RAG] Reranking ${docs.length} documents with Cohere...`);
+
+            try {
+                const reranked = await cohereReranker.compressDocuments(docs, query);
+                console.log(`[RAG] Reranked to top ${reranked.length} results.`);
+                return reranked;
+            } catch (error) {
+                console.error("[RAG] Reranking failed, falling back to basic hybrid results:", error);
+                return docs.slice(0, 5); // Fallback to top 5 original docs
+            }
+        },
+        // Helpers for compatibility if needed
+        getRelevantDocuments: async (query: string) => {
+            // Same logic as invoke
+            const docs = await baseRetriever.invoke(query);
+            if (!docs.length) return [];
+            try {
+                return await cohereReranker.compressDocuments(docs, query);
+            } catch (e) { return docs.slice(0, 5); }
+        }
+    };
 };

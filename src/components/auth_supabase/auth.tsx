@@ -56,7 +56,7 @@ export function AuthForm({ view = 'signin' }: AuthFormProps) {
                             <div className="grid gap-2">
                                 <div className="flex items-center">
                                     <Label htmlFor="password">Mot de passe</Label>
-                                    {isLogin && <a href="#" className="ml-auto inline-block text-sm underline">Mot de passe oublié ?</a>}
+                                    {isLogin && <a href="/auth_supabase/forgot-password" className="ml-auto inline-block text-sm underline">Mot de passe oublié ?</a>}
                                 </div>
                                 <Input id="password" name="password" type="password" required />
                             </div>

@@ -1,4 +1,4 @@
-import { PricingTable } from "@/components/dashboard/settings/pricing";
+import { PricingTable } from "@/components/payment_stripe/pricing";
 
 export default function SettingsPage() {
     return (
