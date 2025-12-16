@@ -1,4 +1,4 @@
-import { AuthForm } from '@/components/dashboard/auth_database_supabase/auth_ui';
+import { AuthForm } from '@/components/auth_supabase/auth';
 
 export default function SignupPage() {
     return (
