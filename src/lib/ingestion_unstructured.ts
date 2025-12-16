@@ -14,6 +14,8 @@ export async function ingestFile(filePath: string) {
         apiKey: process.env.UNSTRUCTURED_API_KEY,
         apiUrl: process.env.UNSTRUCTURED_API_URL, // Defaults to SaaS URL if undefined
         strategy: "hi_res",
+        chunkingStrategy: "by_title", // Optimal for legal docs to respect structure
+        // coordinates: true, // Enable if UI needs bounding boxes later
     });
 
     const docs = await loader.load();

@@ -4,6 +4,10 @@ import { writeFile, unlink, mkdir } from "fs/promises";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
 import { existsSync } from "fs";
+import { uploadFileToStorage } from "@/lib/database_supabase/storage";
+import { cookies } from "next/headers";
+import { createClient } from "@/lib/database_supabase/server";
+import { indexDocuments } from "@/lib/framework_langchain/ingest_retrieve";
 
 export async function POST(req: NextRequest) {
     try {
@@ -14,12 +18,27 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "No file provided" }, { status: 400 });
         }
 
-        // Validate file type (optional but recommended)
-        // const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-        // if (!allowedTypes.includes(file.type)) { ... }
+        // 1. Upload to Supabase Storage (Backup/Source of Truth)
+        const filename = file.name; // Keep original name for logic, sanitization happens in storage.ts
 
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
+        // Retrieve User ID for folder organization
+        const cookieStore = await cookies();
+        const supabase = await createClient(cookieStore);
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+            try {
+                await uploadFileToStorage(file, filename, user.id);
+            } catch (err) {
+                console.error("Supabase Storage Upload Error:", err);
+            }
+        }
+
+        // 2. Process locally for Unstructured/LangChain
+        // const filename = `${uuidv4()}-${file.name}`;
+        // We use a local filename logic for temp processing
+        const tempFilename = `${uuidv4()}-${filename}`;
+        const buffer = Buffer.from(await file.arrayBuffer());
 
         // Create temp directory if it doesn't exist
         const tempDir = join(process.cwd(), "tmp");
@@ -27,13 +46,20 @@ export async function POST(req: NextRequest) {
             await mkdir(tempDir, { recursive: true });
         }
 
-        // Save to temp file with unique name to avoid collisions
-        const tempFilePath = join(tempDir, `${uuidv4()}-${file.name}`);
+        // Save to temp file
+        const tempFilePath = join(tempDir, tempFilename);
         await writeFile(tempFilePath, buffer);
 
         try {
             // Process with Unstructured via LangChain Loader
+            // Note: We might want to pass the storage URL as metadata later
             const docs = await ingestFile(tempFilePath);
+
+            // 3. Index Documents into Supabase Vector Store (Critical Step!)
+            if (docs.length > 0) {
+                await indexDocuments(docs);
+                console.log(`[Ingest] Indexed ${docs.length} documents.`);
+            }
 
             // Return structured data
             return NextResponse.json({
