@@ -39,10 +39,11 @@ export async function POST(req: Request) {
         }
 
         // Success and Cancel URLs
-        // Priority: Defined Site URL -> Vercel URL -> Localhost
-        const appUrl = process.env.NEXT_PUBLIC_SITE_URL
-            || process.env.NEXT_PUBLIC_APP_URL
-            || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
+        // Priority: Localhost (Dev) -> Explicit Production URL (Prod)
+        // We force pilawrag.vercel.app in production to ensure "Back" buttons work even if env vars are missing.
+        const appUrl = process.env.NODE_ENV === 'development'
+            ? 'http://localhost:3000'
+            : 'https://pilawrag.vercel.app';
         const successUrl = `${appUrl}/dashboard/billing?session_id={CHECKOUT_SESSION_ID}`;
         const cancelUrl = `${appUrl}/dashboard/billing`;
 

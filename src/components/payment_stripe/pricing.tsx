@@ -43,7 +43,7 @@ export function PricingTable({ currentPlan }: { currentPlan?: string }) {
                 const isPro = plan.name === "Pro";
                 // For billing dashboard, we likely don't want "Enterprise" to capture "Scale" logic unless specified.
                 // But mimicking public page logic:
-                const isEnterprise = plan.name === "Scale" || plan.name === "Enterprise";
+                const isEnterprise = plan.name === "Enterprise";
 
                 // Check if this is the active plan (case-insensitive for safety)
                 const isActive = currentPlan?.toLowerCase() === plan.name.toLowerCase();
