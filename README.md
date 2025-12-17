@@ -1,101 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pilaw - RAG Chat Application
 
-## 🗺️ Project Map
+![Project Preview](public/project-preview.png)
 
-### 🔌 API Routes
-### 🔌 API Routes
-| Route | Description | Link |
-|-------|-------------|------|
-| `/api/llm_ai-gateway/chat` | AI Chat (streamText/Vercel AI SDK) | [http://localhost:3000/api/llm_ai-gateway/chat](http://localhost:3000/api/llm_ai-gateway/chat) |
-| `/api/llm_ai-gateway/models` | Dynamic Model Discovery (from Gateway) | [http://localhost:3000/api/llm_ai-gateway/models](http://localhost:3000/api/llm_ai-gateway/models) |
-| `/api/payment_stripe/checkout` | Create Stripe Checkout Session | [http://localhost:3000/api/payment_stripe/checkout](http://localhost:3000/api/payment_stripe/checkout) |
-| `/api/ingestion_unstructured` | File Upload & Parsing | [http://localhost:3000/api/ingestion_unstructured](http://localhost:3000/api/ingestion_unstructured) |
-| `/api/connector_nango` | Nango Auth & Session Token | [http://localhost:3000/api/connector_nango](http://localhost:3000/api/connector_nango) |
+## 🚀 Overview
+**Pilaw** is a modern, AI-powered chat application featuring a robust **Retrieval-Augmented Generation (RAG)** system. It enables users to upload documents and interact with them via an intelligent LLM interface.
 
-### 🪝 Webhooks
-| Route | Description | Link |
-|-------|-------------|------|
-| `/api/webhooks/payment_stripe` | Stripe Events (Checkout, Invoice, Subscription) | [http://localhost:3000/api/webhooks/payment_stripe](http://localhost:3000/api/webhooks/payment_stripe) |
-| `/api/webhooks/integration_nango` | Nango Sync Events | [http://localhost:3000/api/webhooks/integration_nango](http://localhost:3000/api/webhooks/integration_nango) |
+Built with **Next.js 14**, **LangChain**, **Supabase**, and **Cohere**, this project demonstrates a complete end-to-end flow from document ingestion to context-aware answer generation.
 
-### ⏱️ Cron Jobs
-| Route | Description | Link |
-|-------|-------------|------|
-| `/api/cron/queue_upstash_qstash` | Upstash QStash Queue Processing | [http://localhost:3000/api/cron/queue_upstash_qstash](http://localhost:3000/api/cron/queue_upstash_qstash) |
+## ✨ Key Features
 
-### 📄 Pages
-| Path | Description | Access |
-|------|-------------|--------|
-| `/dashboard/chat` | AI Chat Interface | [http://localhost:3000/dashboard/chat](http://localhost:3000/dashboard/chat) |
-| `/dashboard/settings` | Settings & Subscription | [http://localhost:3000/dashboard/settings](http://localhost:3000/dashboard/settings) |
-| `/dashboard/analytics` | Analytics Dashboard | [http://localhost:3000/dashboard/analytics](http://localhost:3000/dashboard/analytics) |
-| `/dashboard/file_uploader` | File Upload Interface | [http://localhost:3000/dashboard/file_uploader](http://localhost:3000/dashboard/file_uploader) |
-| `/auth_supabase/signin` | Login Page | [http://localhost:3000/auth_supabase/signin](http://localhost:3000/auth_supabase/signin) |
-| `/auth_supabase/signup` | Registration Page | [http://localhost:3000/auth_supabase/signup](http://localhost:3000/auth_supabase/signup) |
+### 💬 Intelligent Chat Interface
+- **Real-time Streaming**: Instant responses using `streamText` from Vercel AI SDK.
+- **Minimalist Design**: Clean, responsive UI built with Tailwind CSS.
+- **Simple & Fast**: No unnecessary complexity—just you and the AI.
 
-### 📂 Source Code Map
-| Directory | Feature | Visible At (URL) |
-|-----------|---------|------------------|
-| `src/components/payment_stripe/pricing.tsx` | Stripe Pricing Table | [http://localhost:3000/dashboard/settings](http://localhost:3000/dashboard/settings) |
-| `src/components/payment_stripe/billing.tsx` | Billing History/Portal | [http://localhost:3000/dashboard/settings](http://localhost:3000/dashboard/settings) |
-| `src/components/dashboard/chat` | AI Chat Interface | [http://localhost:3000/dashboard/chat](http://localhost:3000/dashboard/chat) |
-| `src/components/auth_supabase` | Authentication Forms | [http://localhost:3000/auth_supabase/signin](http://localhost:3000/auth_supabase/signin) |
+### 📄 Document Ingestion (RAG)
+- **File Upload**: Upload PDFs and text files directly via the chat interface (📎 button).
+- **Unstructured API**: High-quality text extraction from complex documents.
+- **Hybrid Search**: Combines **Semantic Search** (Embeddings) and **Keyword Search** (Full-Text) via Supabase for maximum retrieval accuracy.
+- **Reranking**: powered by **Cohere**, ensuring the LLM only sees the most relevant context.
 
-## 🚀 Comment Lancer le Projet
+### 🛠 Tech Stack
+- **Frontend**: Next.js 14 (App Router), React, Tailwind CSS.
+- **Backend/API**: Next.js API Routes.
+- **AI Orchestration**: LangChain, Vercel AI SDK (@ai-sdk/twitter).
+- **Database (Vector Store)**: Supabase (pgvector).
+- **Reranker**: Cohere API.
+- **Model**: OpenAI GPT-4o via AI Gateway.
+- **Deploy**: Vercel (Ready).
 
-1.  Ouvrez votre terminal à la racine du projet (`C:\Users\Asus Vivobook\Downloads\AAA\projet\pilaw`).
-2.  Installez les dépendances (si ce n'est pas déjà fait) :
-    ```bash
-    pnpm install
-    ```
-3.  Lancez le serveur de développement :
-    ```bash
-    pnpm dev
-    ```
-4.  Ouvrez votre navigateur sur : [http://localhost:3000](http://localhost:3000).
+## 🚀 Getting Started
 
-## ✅ État des Fonctionnalités Vérifiées
+### Prerequisites
+- Node.js 18+
+- pnpm
 
-| Fonctionnalité | État | Notes |
-| :--- | :--- | :--- |
-| **Authentification** | 🟢 Opérationnel | Redirection `/auth_supabase` fonctionnelle. Login/Signup accessibles. |
-| **Tableau de Bord** | 🟢 Opérationnel | Protégé par middleware. Redirige vers login si non connecté. |
-| **Paiement (Stripe)** | 🟢 Intégré | Page `/dashboard/settings` contient le PricingTable. Webhook configurer. |
-| **Chat AI** | 🟠 Partiel | Route API active. Reranking (Cohere) désactivé temporairement pour stabiliser le build. |
+### Installation
 
-## 🧪 Procédure de Test Détaillée
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/user257814938/Pilaw_RAG.git
+   cd pilaw
+   ```
 
-### 1. Authentification
-*   Accédez à `http://localhost:3000`.
-*   Tentez d'accéder à `http://localhost:3000/dashboard/settings`.
-*   **Résultat attendu** : Redirection automatique vers `/auth_supabase/signin`.
-*   Créez un compte ou connectez-vous.
+2. **Install dependencies**:
+   ```bash
+   pnpm install
+   ```
 
-### 2. Gestion de l'Abonnement (Stripe)
-*   Une fois connecté, allez dans **Paramètres** (`/dashboard/settings`).
-*   Vérifiez que les plans tarifaires (Gratuit / Pro) s'affichent.
-*   Cliquez sur "S'abonner" pour tester la redirection vers le Checkout Stripe (mode test).
+3. **Configure Environment**:
+   Create a `.env.local` file with your keys:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=...
+   SUPABASE_SERVICE_ROLE_KEY=...
+   OPENAI_API_KEY=...
+   COHERE_API_KEY=...
+   UNSTRUCTURED_API_KEY=...
+   ```
 
-### 3. Chat & IA
-*   Accédez à la page Chat.
-*   Envoyez un message.
-*   **Note** : Le "Reranking" avancé est désactivé. Le chat utilisera la recherche vectorielle standard.
+4. **Run Development Server**:
+   ```bash
+   pnpm dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📸 How it Works
+1. **Upload**: Drag & drop or click the clip button to upload a file.
+2. **Process**: The file is sent to Unstructured -> Text extracted -> Vectors stored in Supabase.
+3. **Chat**: Ask a question. The system searches Supabase -> Reranks with Cohere -> Sends context + question to GPT-4o.
+4. **Result**: You get a precise, sourced answer.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+*Created with ❤️ by the Pilot Team*
