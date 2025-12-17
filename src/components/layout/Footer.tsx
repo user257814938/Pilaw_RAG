@@ -43,7 +43,7 @@ export function Footer() {
                         Terms
                         <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-white transition-all group-hover:w-full"></span>
                     </Link>
-                    <Link href="#" className="group relative transition-colors hover:text-white">
+                    <Link href="/contact" className="group relative transition-colors hover:text-white">
                         Contact
                         <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-white transition-all group-hover:w-full"></span>
                     </Link>

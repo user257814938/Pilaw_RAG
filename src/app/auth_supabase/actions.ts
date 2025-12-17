@@ -77,7 +77,7 @@ export async function signout() {
     }
 
     revalidatePath('/', 'layout');
-    redirect('/auth_supabase/signin');
+    redirect('/');
 }
 
 export async function forgotPassword(formData: FormData) {

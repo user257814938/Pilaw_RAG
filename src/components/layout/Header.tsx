@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { signout } from '@/app/auth_supabase/actions';
 
 export function Header() {
     const pathname = usePathname();
@@ -43,6 +44,14 @@ export function Header() {
                                 Billing
                                 <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-indigo-600 transition-all group-hover:w-full"></span>
                             </Link>
+                            <form action={signout}>
+                                <button
+                                    type="submit"
+                                    className="text-sm font-medium text-red-600 transition-colors hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-md"
+                                >
+                                    Sign out
+                                </button>
+                            </form>
                         </>
                     ) : (
                         <>
