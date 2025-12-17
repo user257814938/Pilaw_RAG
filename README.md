@@ -1,3 +1,7 @@
+Vidéo : https://www.awesomescreenshot.com/video/47575975?key=61655af770e1d1abc707be4bb4f1992b
+
+Slides : https://gamma.app/docs/Pilaw-Votre-Cerveau-dEntreprise-Connecte-b9gmmj0r17cfzlp
+
 # Pilaw - RAG Chat Application
 
 ![Home Page](public/home-page.png)
