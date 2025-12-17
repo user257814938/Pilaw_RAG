@@ -83,6 +83,6 @@ export const config = {
          * - api (API routes, unless you want them protected) -> Currently EXCLUDED relative to the negation?
          * Warning: The regex below EXCLUDES "webhooks" from the middleware execution, so they pass through freely.
          */
-        '/((?!_next/static|_next/image|favicon.ico|webhooks|api).*)',
+        '/((?!_next/static|_next/image|favicon.ico|icon.png|manifest.json|webhooks|api).*)',
     ],
 }
