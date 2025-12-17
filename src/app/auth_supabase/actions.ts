@@ -5,6 +5,20 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/database_supabase/server';
 import { cookies } from 'next/headers';
 
+const getURL = () => {
+    let url =
+        process.env.NEXT_PUBLIC_SITE_URL ?? // Set this to your site URL in production env.
+        process.env.NEXT_PUBLIC_VERCEL_URL ?? // Automatically set by Vercel.
+        'http://localhost:3000/';
+
+    // Make sure to include `https://` when not localhost.
+    url = url.includes('http') ? url : `https://${url}`;
+    // Make sure to include a trailing `/`.
+    url = url.charAt(url.length - 1) === '/' ? url : `${url}/`;
+    return url;
+};
+
+
 export async function signin(formData: FormData) {
     const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
@@ -22,7 +36,7 @@ export async function signin(formData: FormData) {
     }
 
     revalidatePath('/', 'layout');
-    redirect('/auth_supabase');
+    redirect('/dashboard');
 }
 
 export async function signup(formData: FormData) {
@@ -40,7 +54,7 @@ export async function signup(formData: FormData) {
             data: {
                 full_name: fullName,
             },
-            emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth_supabase/callback`,
+            emailRedirectTo: `${getURL()}auth_supabase/callback`,
         }
     });
 
@@ -49,7 +63,7 @@ export async function signup(formData: FormData) {
     }
 
     revalidatePath('/', 'layout');
-    redirect('/auth_supabase');
+    redirect('/dashboard');
 }
 
 export async function signout() {
@@ -73,7 +87,7 @@ export async function forgotPassword(formData: FormData) {
     const email = formData.get('email') as string;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth_supabase/callback?next=/auth_supabase/update-password`,
+        redirectTo: `${getURL()}auth_supabase/callback?next=/auth_supabase/update-password`,
     });
 
     if (error) {
@@ -98,5 +112,5 @@ export async function updatePassword(formData: FormData) {
     }
 
     revalidatePath('/', 'layout');
-    redirect('/auth_supabase');
+    redirect('/dashboard');
 }
