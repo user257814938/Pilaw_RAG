@@ -11,8 +11,9 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface AuthFormProps {
     view?: 'signin' | 'signup';
@@ -21,6 +22,11 @@ interface AuthFormProps {
 export function AuthForm({ view = 'signin' }: AuthFormProps) {
     const [isLogin, setIsLogin] = useState(view === 'signin');
     const [loading, setLoading] = useState(false);
+
+    // Sync state with prop if view changes
+    useEffect(() => {
+        setIsLogin(view === 'signin');
+    }, [view]);
 
     // Using server actions directly in form action is possible, 
     // but wrapping in a client handler allows for loading states if needed
@@ -32,11 +38,11 @@ export function AuthForm({ view = 'signin' }: AuthFormProps) {
         <div className="mx-auto max-w-sm space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-2xl">{isLogin ? 'Connexion' : 'Inscription'}</CardTitle>
+                    <CardTitle className="text-2xl">{isLogin ? 'Sign In' : 'Sign Up'}</CardTitle>
                     <CardDescription>
                         {isLogin
-                            ? 'Entrez votre email pour vous connecter'
-                            : 'Créez un compte pour commencer'}
+                            ? 'Enter your email to sign in'
+                            : 'Create an account to get started'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -45,7 +51,7 @@ export function AuthForm({ view = 'signin' }: AuthFormProps) {
                         <form action={isLogin ? signin : signup} className="grid gap-4">
                             {!isLogin && (
                                 <div className="grid gap-2">
-                                    <Label htmlFor="full_name">Nom complet</Label>
+                                    <Label htmlFor="full_name">Full Name</Label>
                                     <Input id="full_name" name="full_name" placeholder="John Doe" required />
                                 </div>
                             )}
@@ -55,25 +61,24 @@ export function AuthForm({ view = 'signin' }: AuthFormProps) {
                             </div>
                             <div className="grid gap-2">
                                 <div className="flex items-center">
-                                    <Label htmlFor="password">Mot de passe</Label>
-                                    {isLogin && <a href="/auth_supabase/forgot-password" className="ml-auto inline-block text-sm underline">Mot de passe oublié ?</a>}
+                                    <Label htmlFor="password">Password</Label>
+                                    {isLogin && <a href="/auth_supabase/forgot-password" className="ml-auto inline-block text-sm underline">Forgot your password?</a>}
                                 </div>
                                 <Input id="password" name="password" type="password" required />
                             </div>
                             <Button type="submit" className="w-full">
-                                {isLogin ? 'Se connecter' : "S'inscrire"}
+                                {isLogin ? 'Sign In' : "Sign Up"}
                             </Button>
                         </form>
 
                         <div className="mt-4 text-center text-sm">
-                            {isLogin ? "Pas encore de compte ? " : "Déjà un compte ? "}
-                            <button
-                                type="button"
-                                onClick={() => setIsLogin(!isLogin)}
+                            {isLogin ? "Don't have an account? " : "Already have an account? "}
+                            <Link
+                                href={isLogin ? "/auth_supabase/signup" : "/auth_supabase/signin"}
                                 className="underline text-blue-500 hover:text-blue-700 font-medium"
                             >
-                                {isLogin ? "S'inscrire" : "Se connecter"}
-                            </button>
+                                {isLogin ? "Sign Up" : "Sign In"}
+                            </Link>
                         </div>
                     </div>
                 </CardContent>
