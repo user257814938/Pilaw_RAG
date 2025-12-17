@@ -9,29 +9,39 @@ export type SubscriptionPlan = {
 
 export const subscriptionPlans: SubscriptionPlan[] = [
     {
-        name: 'Free',
-        description: 'Perfect for getting started',
-        priceId: '', // Free plan has no price ID or use a product ID if needed for tracking
-        price: '$0',
+        name: 'Starter Plan',
+        description: 'Perfect for individuals and small teams getting started with RAG technology',
+        priceId: 'price_1SfJeMCKgEFZ6loOMXX67HC1',
+        price: '25,00$',
         features: [
-            'Access to basic AI models',
-            '50 messages per day',
-            'Community support',
-            'Basic RAG context',
+            'Unlimited messages',
+            '100 documents',
+            'Basic AI models',
         ],
     },
     {
-        name: 'Pro',
-        description: 'For power users and professionals',
-        priceId: 'price_1Q...', // REPLACE WITH REAL STRIPE PRICE ID
-        price: '$29',
+        name: 'Pro Plan',
+        description: 'Ideal for growing teams and businesses with advanced RAG requirements',
+        priceId: 'price_1SfJfWCKgEFZ6loO3O24YFm2',
+        price: '50,00$',
         features: [
-            'Unlimited AI messages',
-            'Access to Premium Models (GPT-4o)',
+            'Unlimited messages',
+            'Advanced AI models',
             'Priority support',
-            'Advanced Reranking (Cohere)',
-            'Larger Context Window',
+            'Hybrid search',
         ],
         popular: true,
+    },
+    {
+        name: 'Scale Plan',
+        description: 'Enterprise-grade solution for large organizations with maximum performance and scalability',
+        priceId: 'price_1SfJgqCKgEFZ6loOAbgtwNdm',
+        price: '100,00$',
+        features: [
+            'Unlimited messages',
+            'Advanced AI models',
+            'Priority support',
+            'Hybrid search',
+        ],
     },
 ];

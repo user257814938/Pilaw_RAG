@@ -2,25 +2,46 @@ import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/payment_stripe/client';
 import { createClient } from '@/lib/database_supabase/server';
 
+import { cookies } from 'next/headers';
+
 export async function POST(req: Request) {
     try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const cookieStore = await cookies();
+        console.log('[STRIPE_CHECKOUT] Cookies received:', cookieStore.getAll().map(c => c.name));
+
+        const supabase = createClient(cookieStore);
+
+        // 1. Check Auth
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError) {
+            console.error('[STRIPE_CHECKOUT] Auth Error:', authError.message);
+        }
+
+        // 2. Connectivity Check (Optional Debug)
+        try {
+            const { error: dbError } = await supabase.from('documents').select('id').limit(1);
+            if (dbError) console.error('[STRIPE_CHECKOUT] DB Connectivity Check Failed:', dbError.message);
+            else console.log('[STRIPE_CHECKOUT] DB Connectivity Check: OK');
+        } catch (e) {
+            console.error('[STRIPE_CHECKOUT] DB Check Threw:', e);
+        }
 
         if (!user) {
-            return new NextResponse('Unauthorized', { status: 401 });
+            console.error('[STRIPE_CHECKOUT] User is NULL. Auth failed.');
+            return NextResponse.json({ error: 'Unauthorized: No active session' }, { status: 401 });
         }
 
         const { priceId, quantity = 1, metadata = {} } = await req.json();
 
         if (!priceId) {
-            return new NextResponse('Missing priceId', { status: 400 });
+            return NextResponse.json({ error: 'Missing priceId' }, { status: 400 });
         }
 
         // Success and Cancel URLs
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        const successUrl = `${appUrl}/dashboard/settings?session_id={CHECKOUT_SESSION_ID}`;
-        const cancelUrl = `${appUrl}/dashboard/settings`;
+        const successUrl = `${appUrl}/dashboard/billing?session_id={CHECKOUT_SESSION_ID}`;
+        const cancelUrl = `${appUrl}/dashboard/billing`;
 
         // Create Checkout Session
         const session = await stripe.checkout.sessions.create({
@@ -50,6 +71,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ url: session.url });
     } catch (error: any) {
         console.error('[STRIPE_CHECKOUT_ERROR]', error);
-        return new NextResponse('Internal Error', { status: 500 });
+        return NextResponse.json(
+            { error: error.message || 'Internal Error' },
+            { status: 500 }
+        );
     }
 }
