@@ -55,6 +55,23 @@ export function Header() {
                         </>
                     ) : (
                         <>
+                            {/* Public Links - Centered (Visual trick via flex order or just grouping) */}
+                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center gap-6">
+                                <Link
+                                    href="/services"
+                                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                                >
+                                    Services
+                                </Link>
+                                <Link
+                                    href="/sectors"
+                                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                                >
+                                    Sectors
+                                </Link>
+                            </div>
+
+                            {/* Right Side Auth Buttons */}
                             <Link
                                 href="/auth_supabase/signin"
                                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"

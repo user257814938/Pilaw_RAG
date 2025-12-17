@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 
 export default function LayoutWrapper({
     children,
@@ -15,17 +16,17 @@ export default function LayoutWrapper({
     // Specifically: /dashboard/chat (and potentially sub-routes of chat if any)
     const isChatPage = pathname?.startsWith("/dashboard/chat");
     const isHomePage = pathname === "/";
+    const isServicesPage = pathname === "/services";
+    const isSectorsPage = pathname === "/sectors";
 
     if (isChatPage) {
         return <>{children}</>;
     }
 
-    import { AnimatedCounter } from "@/components/ui/animated-counter";
 
-    // ... inside LayoutWrapper ...
 
-    // Home Page: Header ONLY (No Footer as per request)
-    if (isHomePage) {
+    // Home Page, Services & Sectors: Header ONLY (Footer handled manually or PublicFooter)
+    if (isHomePage || isServicesPage || isSectorsPage) {
         return (
             <div className="relative flex min-h-screen flex-col bg-background">
                 <div className="flex justify-center pt-4 mb-2">
