@@ -43,10 +43,11 @@ export async function POST(req: NextRequest) {
         const buffer = Buffer.from(await file.arrayBuffer());
 
         // Create temp directory if it doesn't exist
-        const tempDir = join(process.cwd(), "tmp");
-        if (!existsSync(tempDir)) {
-            await mkdir(tempDir, { recursive: true });
-        }
+        // Create temp directory (Use os.tmpdir() for Vercel/Lambda compatibility)
+        const os = await import('os');
+        const tempDir = os.tmpdir();
+        // No need to mkdir for system temp dir usually, but safe to verify
+        // if (!existsSync(tempDir)) { await mkdir(tempDir, { recursive: true }); }
 
         // Save to temp file
         const tempFilePath = join(tempDir, tempFilename);

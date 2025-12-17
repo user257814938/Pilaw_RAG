@@ -76,14 +76,22 @@ export default function Chat() {
         formData.append("file", file);
 
         try {
+            console.log("🚀 Starting upload for:", file.name);
             const response = await fetch("/api/ingestion_unstructured", {
                 method: "POST",
                 body: formData,
             });
 
-            if (!response.ok) throw new Error("Upload failed");
+            console.log("📡 Response status:", response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("❌ Upload failed:", errorText);
+                throw new Error("Upload failed: " + errorText);
+            }
 
             const data = await response.json();
+            console.log("✅ Upload success, data:", data);
             toast.success(`File uploaded: ${file.name}`);
             console.log("Indexed documents:", data.documents);
 
