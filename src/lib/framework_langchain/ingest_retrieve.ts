@@ -2,6 +2,7 @@ import { Embeddings, EmbeddingsParams } from '@langchain/core/embeddings';
 import { embed, embedMany } from 'ai';
 import { gateway } from '@ai-sdk/gateway';
 import { SupabaseVectorStore } from '@langchain/community/vectorstores/supabase';
+import { SupabaseHybridSearch } from "@langchain/community/retrievers/supabase";
 import { supabaseAdmin } from '../database_supabase/admin';
 import { createClient } from '../database_supabase/client';
 import { DEFAULT_EMBEDDING_MODEL_ID } from '../llm_ai-gateway/model_selection';
@@ -58,27 +59,18 @@ export async function indexDocuments(docs: any[]) {
 
 /**
  * Returns a Hybrid Retriever enhanced with Cohere Rerank
- * Manually implemented to avoid dependency on ContextualCompressionRetriever
  */
 export const getRetriever = () => {
     const client = createClient();
 
-    // 1. Initial Hybrid Search Retrieval
-    const store = new SupabaseVectorStore(embeddings, {
+    // 1. Initial Hybrid Search Retrieval using LangChain's dedicated class
+    const baseRetriever = new SupabaseHybridSearch(embeddings, {
         client,
+        similarityK: 10,
+        keywordK: 10,
         tableName: "documents",
-        queryName: "match_documents",
-    });
-
-    // Use hybrid search options
-    const baseRetriever = store.asRetriever({
-        searchType: "hybrid",
-        k: 10,
-        // @ts-ignore
-        searchKwargs: {
-            keywordCount: 5,
-            vectorCount: 10
-        }
+        similarityQueryName: "match_documents",
+        keywordQueryName: "kw_match_documents",
     });
 
     // 2. Wrap in a Runnable/Function for Reranking

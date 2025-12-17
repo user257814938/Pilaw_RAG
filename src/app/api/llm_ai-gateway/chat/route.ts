@@ -7,68 +7,115 @@ import { SYSTEM_PROMPT } from '@/lib/llm_ai-gateway/system_prompt';
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-    const { messages, model, webSearch }: { messages: UIMessage[], model?: string, webSearch?: boolean } = await req.json();
-
-    // 0. Handle Web Search Mode (bypass RAG/Gateway if specifically requested for search)
-    if (webSearch) {
-        const result = streamText({
-            model: 'perplexity/sonar', // Direct to Perplexity for web search
-            messages: convertToModelMessages(messages),
-            system: 'You are a helpful assistant with access to real-time web search.',
-        });
-        return result.toUIMessageStreamResponse({ sendSources: true, sendReasoning: true });
-    }
-
-    // 1. Dynamic Model Discovery ("Dynamico Modélix" logic)
-    // Instead of hardcoding 'openai/gpt-4o', we ask the Gateway what's available.
-    let selectedModelId = model || DEFAULT_MODEL_ID; // Use frontend model or intelligent fallback
-
-    if (!model) {
-        try {
-            const { models } = await gateway.getAvailableModels();
-            // Log available models for debugging
-            console.log('🤖 Dynamic Model Discovery - Available Models:', models.map(m => m.id));
-            // Find the first available language model
-            const dynamicModel = models.find(m => m.modelType === 'language' || !m.modelType);
-            if (dynamicModel) {
-                selectedModelId = dynamicModel.id;
-                console.log(`✅ Selected Dynamic Model: ${selectedModelId}`);
-            }
-        } catch (error) {
-            console.warn('⚠️ Gateway Model Discovery failed, using fallback:', selectedModelId);
-        }
-    }
-
-    // 2. RAG: Retrieve relevant documents from Supabase (only for normal chat)
-    const lastMessage = messages[messages.length - 1];
-    // Handle UIMessage which might use 'parts' instead of 'content' in newer SDKs
-    const question = ((lastMessage as any).content ?? (lastMessage as any).parts?.filter((p: any) => p.type === 'text').map((p: any) => p.text).join('')) as string;
-
-    let systemPrompt = SYSTEM_PROMPT;
-
+    // MINIMAL DEBUG MODE
     try {
-        const retriever = getRetriever();
-        const docs = await retriever.invoke(question);
+        console.log("📥 API Request received");
 
-        if (docs.length > 0) {
-            // Manual formatting
-            const context = docs.map((doc: any) => doc.pageContent).join('\n\n');
-            systemPrompt += `\n\nUse the following context to answer the user's question:\nContext:\n${context}`;
+        // Check 1: Can we parse body?
+        const { messages, model, webSearch } = await req.json();
+
+        // 1. Model Selection
+        let selectedModelId = model || DEFAULT_MODEL_ID;
+        let gatewayModelsCount = 0;
+
+        if (!model) { // Only try gateway lookup if no specific model requested (or test it anyway)
+            // Force test gateway
+            try {
+                console.log("➡️ calling gateway.getAvailableModels()...");
+                const { models } = await gateway.getAvailableModels();
+                console.log("✅ Gateway returned models:", models.length);
+                gatewayModelsCount = models.length;
+
+                // Logic to select model...
+                const dynamicModel = models.find(m => m.modelType === 'language' || !m.modelType);
+                if (dynamicModel) {
+                    // selectedModelId = dynamicModel.id; // Keep explicit for now
+                }
+            } catch (error: any) {
+                console.warn('⚠️ Gateway Model Discovery failed:', error);
+                // We don't crash, just log property
+            }
         }
-    } catch (e) {
-        console.error("RAG Retrieval check failed (likely no docs or db issue), proceeding without context.");
+
+        // 2. Redis Caching Strategy (Read)
+        let cacheKey: string | null = null;
+        let cacheHit = false;
+        let cachedContentLength = 0;
+
+        try {
+            // Generate Key
+            const { createHash } = await import('crypto');
+            // Mock question for test since we parse manual JSON
+            const lastMessage = messages?.[messages.length - 1];
+            const question = (lastMessage as any)?.content || "test_question";
+
+            const hash = createHash('sha256').update(`${selectedModelId}:${question}`).digest('hex');
+            cacheKey = `chat_cache:${hash}`;
+
+            // READ CACHE
+            const { getRedisClient } = await import('@/lib/cache_queue_vector_upstash/cache_upstash_redis');
+            const redis = getRedisClient();
+            const cachedResponse = await redis.get(cacheKey);
+
+            if (cachedResponse && typeof cachedResponse === 'string') {
+                console.log(`⚡ CACHE HIT for key: ${cacheKey}`);
+                cacheHit = true;
+                cachedContentLength = cachedResponse.length;
+            }
+        } catch (e: any) {
+            console.error("Redis Cache Read Failed:", e);
+        }
+
+        // 2. RAG: Retrieve relevant documents from Supabase (only for normal chat)
+        const lastMessage = messages?.[messages.length - 1];
+        // Handle UIMessage which might use 'parts' instead of 'content' in newer SDKs
+        const question = ((lastMessage as any)?.content ?? (lastMessage as any)?.parts?.filter((p: any) => p.type === 'text').map((p: any) => p.text).join('')) as string || "test";
+
+        let systemPrompt = SYSTEM_PROMPT;
+
+        try {
+            const retriever = getRetriever();
+            const docs = await retriever.invoke(question);
+
+            if (docs.length > 0) {
+                // Manual formatting
+                const context = docs.map((doc: any) => doc.pageContent).join('\n\n');
+                systemPrompt += `\n\nUse the following context to answer the user's question:\nContext:\n${context}`;
+            }
+        } catch (e) {
+            console.warn("RAG Retrieval check failed (likely no docs or db issue), proceeding without context.", e);
+        }
+
+        console.log("➡️ Starting streamText with model:", selectedModelId);
+
+        // 3. Call Vercel AI SDK
+        const result = streamText({
+            model: gateway(selectedModelId),
+            system: systemPrompt,
+            messages: messages.map((m: any) => ({ role: m.role, content: m.content })),
+            onFinish: async ({ text }) => {
+                // WRITE CACHE
+                if (cacheKey && text) {
+                    try {
+                        const { getRedisClient } = await import('@/lib/cache_queue_vector_upstash/cache_upstash_redis');
+                        const redis = getRedisClient();
+                        // Cache for 1 hour
+                        await redis.set(cacheKey, text, { ex: 3600 });
+                        console.log(`💾 CACHE SAVED for key: ${cacheKey}`);
+                    } catch (e) {
+                        console.error("Redis Cache Write Failed:", e);
+                    }
+                }
+            }
+        });
+
+        // 4. Return Stream
+        return result.toUIMessageStreamResponse({
+            sendSources: true,
+            sendReasoning: true
+        });
+
+    } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
-
-    // 4. Call Vercel AI SDK
-    const result = streamText({
-        model: gateway(selectedModelId), // Uses the dynamically discovered parameters passed via gateway provider
-        system: systemPrompt,
-        messages: convertToCoreMessages(messages),
-    });
-
-    // 5. Return Stream compatible with AI Elements (UIMessageStreamResponse)
-    return result.toUIMessageStreamResponse({
-        sendSources: true,
-        sendReasoning: true
-    });
 }

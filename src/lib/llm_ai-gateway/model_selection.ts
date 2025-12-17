@@ -45,26 +45,22 @@ export async function getDynamicModels() {
 
 export const AI_MODELS = [
     {
-        name: 'GPT 5 Nano',
-        value: 'openai/gpt-5-nano',
+        name: 'GPT 4o',
+        value: 'openai/gpt-4o',
     },
     {
-        name: 'GPT 5.2',
-        value: 'openai/gpt-5.2',
+        name: 'GPT 4-Turbo',
+        value: 'openai/gpt-4-turbo',
     },
     {
-        name: 'Claude Opus 4.5',
-        value: 'anthropic/claude-opus-4.5',
+        name: 'Claude 3.5 Sonnet',
+        value: 'anthropic/claude-3-5-sonnet-20240620',
     },
     {
-        name: 'Claude Haiku 4.5',
-        value: 'anthropic/claude-haiku-4.5',
-    },
-    {
-        name: 'Deepseek v3.2',
-        value: 'deepseek/deepseek-v3.2',
+        name: 'Claude 3 Opus',
+        value: 'anthropic/claude-3-opus-20240229',
     },
 ];
 
-export const DEFAULT_MODEL_ID = AI_MODELS[1].value;
+export const DEFAULT_MODEL_ID = AI_MODELS[0].value;
 export const DEFAULT_EMBEDDING_MODEL_ID = 'openai/text-embedding-3-large';
