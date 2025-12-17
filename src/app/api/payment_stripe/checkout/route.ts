@@ -3,6 +3,7 @@ import { stripe } from '@/lib/payment_stripe/client';
 import { createClient } from '@/lib/database_supabase/server';
 
 import { cookies } from 'next/headers';
+import { SITE_URL } from '@/lib/config';
 
 export async function POST(req: Request) {
     try {
@@ -38,12 +39,13 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing priceId' }, { status: 400 });
         }
 
+
+
         // Success and Cancel URLs
         // Priority: Localhost (Dev) -> Explicit Production URL (Prod)
-        // We force pilawrag.vercel.app in production to ensure "Back" buttons work even if env vars are missing.
         const appUrl = process.env.NODE_ENV === 'development'
             ? 'http://localhost:3000'
-            : 'https://pilawrag.vercel.app';
+            : SITE_URL;
         const successUrl = `${appUrl}/dashboard/billing?session_id={CHECKOUT_SESSION_ID}`;
         const cancelUrl = `${appUrl}/dashboard/billing`;
 

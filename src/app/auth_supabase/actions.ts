@@ -5,9 +5,12 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/database_supabase/server';
 import { cookies } from 'next/headers';
 
+import { SITE_URL } from '@/lib/config';
+
 const getURL = () => {
     let url =
-        process.env.NEXT_PUBLIC_SITE_URL ?? // Set this to your site URL in production env.
+        SITE_URL ??
+        process.env.NEXT_PUBLIC_SITE_URL ?? // Legacy fallback
         process.env.NEXT_PUBLIC_VERCEL_URL ?? // Automatically set by Vercel.
         'http://localhost:3000/';
 

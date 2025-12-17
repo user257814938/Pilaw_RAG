@@ -13,7 +13,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import { SITE_URL } from "@/lib/config";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Pilaw - Enterprise RAG & Legal Intelligence",
   description: "Securely chat with your company's data. Upload documents, images, and audio recordings to unlock instant insights using advanced AI.",
 };
