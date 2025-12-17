@@ -1,639 +1,219 @@
 "use client";
 
-import {
-    MessageBranch,
-    MessageBranchContent,
-    MessageBranchNext,
-    MessageBranchPage,
-    MessageBranchPrevious,
-    MessageBranchSelector,
-} from "@/components/ai-elements/message";
-import {
-    Conversation,
-    ConversationContent,
-    ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
-import { Message, MessageContent } from "@/components/ai-elements/message";
-import {
-    PromptInput,
-    PromptInputActionAddAttachments,
-    PromptInputActionMenu,
-    PromptInputActionMenuContent,
-    PromptInputActionMenuTrigger,
-    PromptInputAttachment,
-    PromptInputAttachments,
-    PromptInputBody,
-    PromptInputButton,
-    PromptInputFooter,
-    PromptInputHeader,
-    type PromptInputMessage,
-    PromptInputSubmit,
-    PromptInputTextarea,
-    PromptInputTools,
-} from "@/components/ai-elements/prompt-input";
-import {
-    ModelSelector,
-    ModelSelectorContent,
-    ModelSelectorEmpty,
-    ModelSelectorGroup,
-    ModelSelectorInput,
-    ModelSelectorItem,
-    ModelSelectorList,
-    ModelSelectorLogo,
-    ModelSelectorLogoGroup,
-    ModelSelectorName,
-    ModelSelectorTrigger,
-} from "@/components/ai-elements/model-selector";
-import {
-    Reasoning,
-    ReasoningContent,
-    ReasoningTrigger,
-} from "@/components/ai-elements/reasoning";
-import { MessageResponse } from "@/components/ai-elements/message";
-import {
-    Source,
-    Sources,
-    SourcesContent,
-    SourcesTrigger,
-} from "@/components/ai-elements/sources";
-import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
-import type { ToolUIPart } from "ai";
-import { CheckIcon, GlobeIcon, MicIcon } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { toast } from "sonner"
 import { nanoid } from "nanoid";
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
 
-type MessageType = {
-    key: string;
-    from: "user" | "assistant";
-    sources?: { href: string; title: string }[];
-    versions: {
-        id: string;
-        content: string;
-    }[];
-    reasoning?: {
-        content: string;
-        duration: number;
+export default function Chat() {
+    const [messages, setMessages] = useState<any[]>([
+        { role: "assistant", content: "Hello! I am Pilaw, your global assistant. How can I help you today?" }
+    ]);
+    const [input, setInput] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
-    tools?: {
-        name: string;
-        description: string;
-        status: ToolUIPart["state"];
-        parameters: Record<string, unknown>;
-        result: string | undefined;
-        error: string | undefined;
-    }[];
-};
 
-const initialMessages: MessageType[] = [
-    {
-        key: nanoid(),
-        from: "user",
-        versions: [
-            {
-                id: nanoid(),
-                content: "Can you explain how to use React hooks effectively?",
-            },
-        ],
-    },
-    {
-        key: nanoid(),
-        from: "assistant",
-        sources: [
-            {
-                href: "https://react.dev/reference/react",
-                title: "React Documentation",
-            },
-            {
-                href: "https://react.dev/reference/react-dom",
-                title: "React DOM Documentation",
-            },
-        ],
-        tools: [
-            {
-                name: "mcp",
-                description: "Searching React documentation",
-                status: "input-available",
-                parameters: {
-                    query: "React hooks best practices",
-                    source: "react.dev",
-                },
-                result: `{
-  "query": "React hooks best practices",
-  "results": [
-    {
-      "title": "Rules of Hooks",
-      "url": "https://react.dev/warnings/invalid-hook-call-warning",
-      "snippet": "Hooks must be called at the top level of your React function components or custom hooks. Don't call hooks inside loops, conditions, or nested functions."
-    },
-    {
-      "title": "useState Hook",
-      "url": "https://react.dev/reference/react/useState",
-      "snippet": "useState is a React Hook that lets you add state to your function components. It returns an array with two values: the current state and a function to update it."
-    },
-    {
-      "title": "useEffect Hook",
-      "url": "https://react.dev/reference/react/useEffect",
-      "snippet": "useEffect lets you synchronize a component with external systems. It runs after render and can be used to perform side effects like data fetching."
-    }
-  ]
-}`,
-                error: undefined,
-            },
-        ],
-        versions: [
-            {
-                id: nanoid(),
-                content: `# React Hooks Best Practices
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
-React hooks are a powerful feature that let you use state and other React features without writing classes. Here are some tips for using them effectively:
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!input.trim() || loading) return;
 
-## Rules of Hooks
-
-1. **Only call hooks at the top level** of your component or custom hooks
-2. **Don't call hooks inside loops, conditions, or nested functions**
-
-## Common Hooks
-
-- **useState**: For local component state
-- **useEffect**: For side effects like data fetching
-- **useContext**: For consuming context
-- **useReducer**: For complex state logic
-- **useCallback**: For memoizing functions
-- **useMemo**: For memoizing values
-
-## Example of useState and useEffect
-
-\`\`\`jsx
-function ProfilePage({ userId }) {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    // This runs after render and when userId changes
-    fetchUser(userId).then(userData => {
-      setUser(userData);
-    });
-  }, [userId]);
-
-  return user ? <Profile user={user} /> : <Loading />;
-}
-\`\`\`
-
-Would you like me to explain any specific hook in more detail?`,
-            },
-        ],
-    },
-    {
-        key: nanoid(),
-        from: "user",
-        versions: [
-            {
-                id: nanoid(),
-                content:
-                    "Yes, could you explain useCallback and useMemo in more detail? When should I use one over the other?",
-            },
-            {
-                id: nanoid(),
-                content:
-                    "I'm particularly interested in understanding the performance implications of useCallback and useMemo. Could you break down when each is most appropriate?",
-            },
-            {
-                id: nanoid(),
-                content:
-                    "Thanks for the overview! Could you dive deeper into the specific use cases where useCallback and useMemo make the biggest difference in React applications?",
-            },
-        ],
-    },
-    {
-        key: nanoid(),
-        from: "assistant",
-        reasoning: {
-            content: `The user is asking for a detailed explanation of useCallback and useMemo. I should provide a clear and concise explanation of each hook's purpose and how they differ.
-
-The useCallback hook is used to memoize functions to prevent unnecessary re-renders of child components that receive functions as props.
-
-The useMemo hook is used to memoize values to avoid expensive recalculations on every render.
-
-Both hooks help with performance optimization, but they serve different purposes.`,
-            duration: 10,
-        },
-        versions: [
-            {
-                id: nanoid(),
-                content: `## useCallback vs useMemo
-
-Both hooks help with performance optimization, but they serve different purposes:
-
-### useCallback
-
-\`useCallback\` memoizes **functions** to prevent unnecessary re-renders of child components that receive functions as props.
-
-\`\`\`jsx
-// Without useCallback - a new function is created on every render
-const handleClick = () => {
-  console.log(count);
-};
-
-// With useCallback - the function is only recreated when dependencies change
-const handleClick = useCallback(() => {
-  console.log(count);
-}, [count]);
-\`\`\`
-
-### useMemo
-
-\`useMemo\` memoizes **values** to avoid expensive recalculations on every render.
-
-\`\`\`jsx
-// Without useMemo - expensive calculation runs on every render
-const sortedList = expensiveSort(items);
-
-// With useMemo - calculation only runs when items change
-const sortedList = useMemo(() => expensiveSort(items), [items]);
-\`\`\`
-
-### When to use which?
-
-- Use **useCallback** when:
-  - Passing callbacks to optimized child components that rely on reference equality
-  - Working with event handlers that you pass to child components
-
-- Use **useMemo** when:
-  - You have computationally expensive calculations
-  - You want to avoid recreating objects that are used as dependencies for other hooks
-
-### Performance Note
-
-Don't overuse these hooks! They come with their own overhead. Only use them when you have identified a genuine performance issue.`,
-            },
-        ],
-    },
-];
-
-const models = [
-    {
-        id: "gpt-4o",
-        name: "GPT-4o",
-        chef: "OpenAI",
-        chefSlug: "openai",
-        providers: ["openai", "azure"],
-    },
-    {
-        id: "gpt-4o-mini",
-        name: "GPT-4o Mini",
-        chef: "OpenAI",
-        chefSlug: "openai",
-        providers: ["openai", "azure"],
-    },
-    {
-        id: "claude-opus-4-20250514",
-        name: "Claude 4 Opus",
-        chef: "Anthropic",
-        chefSlug: "anthropic",
-        providers: ["anthropic", "azure", "google", "amazon-bedrock"],
-    },
-    {
-        id: "claude-sonnet-4-20250514",
-        name: "Claude 4 Sonnet",
-        chef: "Anthropic",
-        chefSlug: "anthropic",
-        providers: ["anthropic", "azure", "google", "amazon-bedrock"],
-    },
-    {
-        id: "gemini-2.0-flash-exp",
-        name: "Gemini 2.0 Flash",
-        chef: "Google",
-        chefSlug: "google",
-        providers: ["google"],
-    },
-];
-
-const suggestions = [
-    "What are the latest trends in AI?",
-    "How does machine learning work?",
-    "Explain quantum computing",
-    "Best practices for React development",
-    "Tell me about TypeScript benefits",
-    "How to optimize database queries?",
-    "What is the difference between SQL and NoSQL?",
-    "Explain cloud computing basics",
-];
-
-
-
-
-const Example = () => {
-    const [model, setModel] = useState<string>(models[0].id);
-    const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
-    const [text, setText] = useState<string>("");
-    const [useWebSearch, setUseWebSearch] = useState<boolean>(false);
-    const [useMicrophone, setUseMicrophone] = useState<boolean>(false);
-    const [status, setStatus] = useState<
-        "submitted" | "streaming" | "ready" | "error"
-    >("ready");
-    const [messages, setMessages] = useState<MessageType[]>(initialMessages);
-    const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
-        null
-    );
-
-    const selectedModelData = models.find((m) => m.id === model);
-
-    const streamRealResponse = async (messageId: string, response: Response) => {
-        setStatus("streaming");
-        setStreamingMessageId(messageId);
-
-        if (!response.body) return;
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let accumulatedContent = "";
+        const userMessage = { role: "user", content: input };
+        setMessages((prev) => [...prev, userMessage]);
+        setInput("");
+        setLoading(true);
 
         try {
+            const response = await fetch("/api/llm_ai-gateway/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messages: [...messages, userMessage] }),
+            });
+
+            if (!response.body) throw new Error("No response body");
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let assistantMessage = { role: "assistant", content: "" };
+
+            setMessages((prev) => [...prev, assistantMessage]);
+
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
 
-                const chunk = decoder.decode(value, { stream: true });
-                accumulatedContent += chunk;
+                const chunk = decoder.decode(value);
+                assistantMessage.content += chunk;
 
-                setMessages((prev) =>
-                    prev.map((msg) => {
-                        if (msg.versions.some((v) => v.id === messageId)) {
-                            return {
-                                ...msg,
-                                versions: msg.versions.map((v) =>
-                                    v.id === messageId ? { ...v, content: accumulatedContent } : v
-                                ),
-                            };
-                        }
-                        return msg;
-                    })
-                );
+                setMessages((prev) => {
+                    const newMessages = [...prev];
+                    newMessages[newMessages.length - 1] = { ...assistantMessage };
+                    return newMessages;
+                });
             }
         } catch (error) {
-            console.error("Streaming error:", error);
-            setStatus("error");
+            console.error("Chat error:", error);
+            toast.error("Failed to send message");
         } finally {
-            setStatus("ready");
-            setStreamingMessageId(null);
+            setLoading(false);
         }
     };
 
-    const handleSuggestionClick = (suggestion: string) => {
-        const message: PromptInputMessage = {
-            id: nanoid(),
-            role: 'user',
-            content: suggestion,
-            text: suggestion,
-            files: []
-        };
-        handleSubmit(message);
-    };
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
 
-    const handleSubmit = async (message: PromptInputMessage) => {
-        const hasText = Boolean(message.text);
-        const hasAttachments = Boolean(message.files?.length);
+        setUploading(true);
+        const formData = new FormData();
+        formData.append("file", file);
 
-        if (!(hasText || hasAttachments)) {
-            return;
-        }
-
-        setStatus("submitted");
-
-        // 1. Add User Message Optimistically
-        const userMsgId = nanoid();
-        const userMessage: MessageType = {
-            key: `user-${Date.now()}`,
-            from: "user",
-            versions: [{ id: userMsgId, content: message.text || "Sent with attachments" }],
-        };
-        setMessages((prev) => [...prev, userMessage]);
-        setText("");
-
-        // 2. Handle File Uploads
-        if (message.files?.length) {
-            toast.info("Uploading files...");
-            const uploadPromises = message.files.map(async (filePart) => {
-                const formData = new FormData();
-                try {
-                    const responseBlob = await fetch(filePart.url).then(r => r.blob());
-                    const file = new File([responseBlob], filePart.filename || "document.pdf", { type: filePart.mediaType });
-                    formData.append("file", file);
-                    await fetch("/api/ingestion_unstructured", { method: "POST", body: formData });
-                } catch (e) {
-                    console.error("Upload failed", e);
-                    toast.error(`Failed to upload ${filePart.filename}`);
-                }
-            });
-            await Promise.all(uploadPromises);
-            toast.success("Files uploaded");
-        }
-
-        // 3. Create Assistant Message Placeholder
-        const assistantMsgId = nanoid();
-        const assistantMessage: MessageType = {
-            key: `assistant-${Date.now()}`,
-            from: "assistant",
-            versions: [{ id: assistantMsgId, content: "..." }],
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-
-        // 4. Call Chat API
         try {
-            // Prepare messages payload (simplify for API)
-            const apiMessages = messages.concat(userMessage).map(m => ({
-                role: m.from,
-                content: m.versions[0].content // simplified: take latest version
-            }));
-
-            const response = await fetch('/api/llm_ai-gateway/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: apiMessages,
-                    model: model,
-                    webSearch: useWebSearch,
-                }),
+            const response = await fetch("/api/ingestion_unstructured", {
+                method: "POST",
+                body: formData,
             });
 
-            if (!response.ok) throw new Error("API Request Failed");
+            if (!response.ok) throw new Error("Upload failed");
 
-            // 5. Stream Response
-            await streamRealResponse(assistantMsgId, response);
+            const data = await response.json();
+            toast.success(`File uploaded: ${file.name}`);
+            console.log("Indexed documents:", data.documents);
+
+            // Add system message about upload
+            setMessages(prev => [...prev, {
+                role: "assistant",
+                content: `✅ I have processed the file "${file.name}". You can now ask questions about it!`
+            }]);
 
         } catch (error) {
-            console.error("Chat error:", error);
-            setStatus("error");
-            toast.error("Failed to send message");
+            console.error("Upload error:", error);
+            toast.error("Failed to upload file");
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
 
-
-
     return (
-        <div className="relative flex size-full flex-col divide-y overflow-hidden">
-            <Conversation>
-                <ConversationContent>
-                    {messages.map(({ versions, ...message }) => (
-                        <MessageBranch defaultBranch={0} key={message.key}>
-                            <MessageBranchContent>
-                                {versions.map((version) => (
-                                    <Message
-                                        from={message.from}
-                                        key={`${message.key}-${version.id}`}
-                                    >
-                                        <div>
-                                            {message.sources?.length && (
-                                                <Sources>
-                                                    <SourcesTrigger count={message.sources.length} />
-                                                    <SourcesContent>
-                                                        {message.sources.map((source) => (
-                                                            <Source
-                                                                href={source.href}
-                                                                key={source.href}
-                                                                title={source.title}
-                                                            />
-                                                        ))}
-                                                    </SourcesContent>
-                                                </Sources>
-                                            )}
-                                            {message.reasoning && (
-                                                <Reasoning duration={message.reasoning.duration}>
-                                                    <ReasoningTrigger />
-                                                    <ReasoningContent>
-                                                        {message.reasoning.content}
-                                                    </ReasoningContent>
-                                                </Reasoning>
-                                            )}
-                                            <MessageContent>
-                                                <MessageResponse>{version.content}</MessageResponse>
-                                            </MessageContent>
-                                        </div>
-                                    </Message>
-                                ))}
-                            </MessageBranchContent>
-                            {versions.length > 1 && (
-                                <MessageBranchSelector from={message.from}>
-                                    <MessageBranchPrevious />
-                                    <MessageBranchPage />
-                                    <MessageBranchNext />
-                                </MessageBranchSelector>
-                            )}
-                        </MessageBranch>
-                    ))}
-                </ConversationContent>
-                <ConversationScrollButton />
-            </Conversation>
-            <div className="grid shrink-0 gap-4 pt-4">
-                <Suggestions className="px-4">
-                    {suggestions.map((suggestion) => (
-                        <Suggestion
-                            key={suggestion}
-                            onClick={() => handleSuggestionClick(suggestion)}
-                            suggestion={suggestion}
-                        />
-                    ))}
-                </Suggestions>
-                <div className="w-full px-4 pb-4">
-                    <PromptInput globalDrop multiple onSubmit={handleSubmit}>
-                        <PromptInputHeader>
-                            <PromptInputAttachments>
-                                {(attachment) => <PromptInputAttachment data={attachment} />}
-                            </PromptInputAttachments>
-                        </PromptInputHeader>
-                        <PromptInputBody>
-                            <PromptInputTextarea
-                                onChange={(event) => setText(event.target.value)}
-                                value={text}
-                            />
-                        </PromptInputBody>
-                        <PromptInputFooter>
-                            <PromptInputTools>
-                                <PromptInputActionMenu>
-                                    <PromptInputActionMenuTrigger />
-                                    <PromptInputActionMenuContent>
-                                        <PromptInputActionAddAttachments />
-                                    </PromptInputActionMenuContent>
-                                </PromptInputActionMenu>
-                                <PromptInputButton
-                                    onClick={() => setUseMicrophone(!useMicrophone)}
-                                    variant={useMicrophone ? "default" : "ghost"}
-                                >
-                                    <MicIcon size={16} />
-                                    <span className="sr-only">Microphone</span>
-                                </PromptInputButton>
-                                <PromptInputButton
-                                    onClick={() => setUseWebSearch(!useWebSearch)}
-                                    variant={useWebSearch ? "default" : "ghost"}
-                                >
-                                    <GlobeIcon size={16} />
-                                    <span>Search</span>
-                                </PromptInputButton>
-                                <ModelSelector
-                                    onOpenChange={setModelSelectorOpen}
-                                    open={modelSelectorOpen}
-                                >
-                                    <ModelSelectorTrigger asChild>
-                                        <PromptInputButton>
-                                            {selectedModelData?.chefSlug && (
-                                                <ModelSelectorLogo provider={selectedModelData.chefSlug} />
-                                            )}
-                                            {selectedModelData?.name && (
-                                                <ModelSelectorName>
-                                                    {selectedModelData.name}
-                                                </ModelSelectorName>
-                                            )}
-                                        </PromptInputButton>
-                                    </ModelSelectorTrigger>
-                                    <ModelSelectorContent>
-                                        <ModelSelectorInput placeholder="Search models..." />
-                                        <ModelSelectorList>
-                                            <ModelSelectorEmpty>No models found.</ModelSelectorEmpty>
-                                            {["OpenAI", "Anthropic", "Google"].map((chef) => (
-                                                <ModelSelectorGroup key={chef} heading={chef}>
-                                                    {models
-                                                        .filter((m) => m.chef === chef)
-                                                        .map((m) => (
-                                                            <ModelSelectorItem
-                                                                key={m.id}
-                                                                onSelect={() => {
-                                                                    setModel(m.id);
-                                                                    setModelSelectorOpen(false);
-                                                                }}
-                                                                value={m.id}
-                                                            >
-                                                                <ModelSelectorLogo provider={m.chefSlug} />
-                                                                <ModelSelectorName>{m.name}</ModelSelectorName>
-                                                                <ModelSelectorLogoGroup>
-                                                                    {m.providers.map((provider) => (
-                                                                        <ModelSelectorLogo
-                                                                            key={provider}
-                                                                            provider={provider}
-                                                                        />
-                                                                    ))}
-                                                                </ModelSelectorLogoGroup>
-                                                                {model === m.id ? (
-                                                                    <CheckIcon className="ml-auto size-4" />
-                                                                ) : (
-                                                                    <div className="ml-auto size-4" />
-                                                                )}
-                                                            </ModelSelectorItem>
-                                                        ))}
-                                                </ModelSelectorGroup>
-                                            ))}
-                                        </ModelSelectorList>
-                                    </ModelSelectorContent>
-                                </ModelSelector>
-                            </PromptInputTools>
-                            <PromptInputSubmit
-                                disabled={!(text.trim() || status) || status === "streaming"}
-                                status={status}
-                            />
-                        </PromptInputFooter>
-                    </PromptInput>
+        <div className="flex flex-col h-screen bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-gray-100 font-sans">
+
+            {/* Header */}
+            <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 z-10">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                        P
+                    </div>
+                    <h1 className="text-xl font-bold tracking-tight">Pilaw Chat</h1>
                 </div>
-            </div>
+                <div className="text-xs text-gray-500">v1.0 • RAG Enabled</div>
+            </header>
+
+            {/* Chat Area */}
+            <main className="flex-1 overflow-y-auto p-4 sm:p-6 scroll-smooth">
+                <div className="max-w-3xl mx-auto space-y-6">
+
+                    {messages.length === 0 && (
+                        <div className="text-center text-gray-400 mt-20">
+                            <p className="text-6xl mb-4">👋</p>
+                            <p>Type a message to start chatting...</p>
+                            <p className="text-sm">Or upload a document to ask questions about it.</p>
+                        </div>
+                    )}
+
+                    {messages.map((msg, i) => (
+                        <div
+                            key={i}
+                            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                        >
+                            <div
+                                className={`max-w-[80%] rounded-2xl px-4 py-2 ${msg.role === "user"
+                                    ? "bg-blue-600 text-white rounded-br-none"
+                                    : "bg-gray-200 dark:bg-zinc-700 text-gray-800 dark:text-gray-100 rounded-bl-none"
+                                    }`}
+                            >
+                                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                            </div>
+                        </div>
+                    ))}
+
+                    {loading && messages[messages.length - 1]?.role === "user" && (
+                        <div className="flex justify-start">
+                            <div className="bg-gray-200 dark:bg-zinc-700 rounded-2xl px-4 py-2 rounded-bl-none">
+                                <span className="animate-pulse">Thinking...</span>
+                            </div>
+                        </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                </div>
+            </main>
+
+            {/* Input Area */}
+            <footer className="p-4 border-t border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                <div className="max-w-3xl mx-auto">
+                    <form onSubmit={handleSubmit} className="flex gap-3 items-end">
+
+                        {/* File Upload */}
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploading || loading}
+                            className="p-3 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-xl text-gray-500 transition-colors disabled:opacity-50"
+                            title="Upload file (PDF, Docs, Images)"
+                        >
+                            {uploading ? (
+                                <span className="animate-spin block">⏳</span>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
+                                </svg>
+                            )}
+                        </button>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            onChange={handleFileUpload}
+                            accept=".pdf,.doc,.docx,.txt,.md,.odt,.rtf,.csv,.xls,.xlsx,.tsv,.ppt,.pptx,.html,.epub,.eml,.msg,.jpg,.jpeg,.png,.bmp,.tiff,.heic,.mp3,.wav,.m4a"
+                        />
+
+                        {/* Text Input */}
+                        <div className="flex-1 bg-gray-100 dark:bg-zinc-800 rounded-xl flex items-center px-4 py-2">
+                            <input
+                                type="text"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder="Ask anything..."
+                                className="w-full bg-transparent border-none focus:ring-0 outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                                disabled={loading}
+                            />
+                        </div>
+
+                        {/* Send Button */}
+                        <button
+                            type="submit"
+                            disabled={!input.trim() || loading}
+                            className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-600/20 transition-all disabled:opacity-50 disabled:shadow-none"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                            </svg>
+                        </button>
+                    </form>
+
+                    <div className="text-center mt-2">
+                        <p className="text-xs text-gray-400">Supported: Docs, Tables, Slides, Images</p>
+                    </div>
+                </div>
+            </footer>
+
         </div>
     );
-};
-
-export default Example;
+}

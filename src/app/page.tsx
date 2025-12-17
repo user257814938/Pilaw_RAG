@@ -1,219 +1,181 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { toast } from "sonner"
-import { nanoid } from "nanoid";
+import Link from "next/link";
+import { ArrowRight, CheckCircle, FileText, Image as ImageIcon, Mic } from "lucide-react";
 
-export default function Chat() {
-    const [messages, setMessages] = useState<any[]>([
-        { role: "assistant", content: "Hello! I am Pilaw, your global assistant. How can I help you today?" }
-    ]);
-    const [input, setInput] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [uploading, setUploading] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!input.trim() || loading) return;
-
-        const userMessage = { role: "user", content: input };
-        setMessages((prev) => [...prev, userMessage]);
-        setInput("");
-        setLoading(true);
-
-        try {
-            const response = await fetch("/api/llm_ai-gateway/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ messages: [...messages, userMessage] }),
-            });
-
-            if (!response.body) throw new Error("No response body");
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let assistantMessage = { role: "assistant", content: "" };
-
-            setMessages((prev) => [...prev, assistantMessage]);
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value);
-                assistantMessage.content += chunk;
-
-                setMessages((prev) => {
-                    const newMessages = [...prev];
-                    newMessages[newMessages.length - 1] = { ...assistantMessage };
-                    return newMessages;
-                });
-            }
-        } catch (error) {
-            console.error("Chat error:", error);
-            toast.error("Failed to send message");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        setUploading(true);
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-            const response = await fetch("/api/ingestion_unstructured", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) throw new Error("Upload failed");
-
-            const data = await response.json();
-            toast.success(`File uploaded: ${file.name}`);
-            console.log("Indexed documents:", data.documents);
-
-            // Add system message about upload
-            setMessages(prev => [...prev, {
-                role: "assistant",
-                content: `✅ I have processed the file "${file.name}". You can now ask questions about it!`
-            }]);
-
-        } catch (error) {
-            console.error("Upload error:", error);
-            toast.error("Failed to upload file");
-        } finally {
-            setUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-        }
-    };
-
+export default function LandingPage() {
     return (
-        <div className="flex flex-col h-screen bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-gray-100 font-sans">
+        <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans selection:bg-blue-100 dark:selection:bg-blue-900">
 
-            {/* Header */}
-            <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 z-10">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
-                        P
+            {/* Navigation */}
+            <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
+                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">P</div>
+                        <span className="text-xl font-bold tracking-tight">Pilaw</span>
                     </div>
-                    <h1 className="text-xl font-bold tracking-tight">Pilaw Chat</h1>
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href="/dashboard/chat"
+                            className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        >
+                            Log in
+                        </Link>
+                        <Link
+                            href="/dashboard/chat"
+                            className="px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-medium rounded-full hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
+                        >
+                            Get Started
+                        </Link>
+                    </div>
                 </div>
-                <div className="text-xs text-gray-500">v1.0 • RAG Enabled</div>
-            </header>
+            </nav>
 
-            {/* Chat Area */}
-            <main className="flex-1 overflow-y-auto p-4 sm:p-6 scroll-smooth">
-                <div className="max-w-3xl mx-auto space-y-6">
-
-                    {messages.length === 0 && (
-                        <div className="text-center text-gray-400 mt-20">
-                            <p className="text-6xl mb-4">👋</p>
-                            <p>Type a message to start chatting...</p>
-                            <p className="text-sm">Or upload a document to ask questions about it.</p>
-                        </div>
-                    )}
-
-                    {messages.map((msg, i) => (
-                        <div
-                            key={i}
-                            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            {/* Hero Section */}
+            <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+                <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-medium mb-8 border border-blue-100 dark:border-blue-800">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                        </span>
+                        New: Audio Transcription & OCR Enabled
+                    </div>
+                    <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight mb-8 bg-gradient-to-b from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400 bg-clip-text text-transparent pb-2">
+                        Enterprise Intelligence.<br />
+                        <span className="text-blue-600 dark:text-blue-500">Multimodal RAG.</span>
+                    </h1>
+                    <p className="text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+                        Securely chat with your company's data. Upload documents, images, and audio recordings to unlock instant insights using advanced AI.
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <Link
+                            href="/dashboard/chat"
+                            className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2"
                         >
-                            <div
-                                className={`max-w-[80%] rounded-2xl px-4 py-2 ${msg.role === "user"
-                                    ? "bg-blue-600 text-white rounded-br-none"
-                                    : "bg-gray-200 dark:bg-zinc-700 text-gray-800 dark:text-gray-100 rounded-bl-none"
-                                    }`}
-                            >
-                                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                            </div>
-                        </div>
-                    ))}
-
-                    {loading && messages[messages.length - 1]?.role === "user" && (
-                        <div className="flex justify-start">
-                            <div className="bg-gray-200 dark:bg-zinc-700 rounded-2xl px-4 py-2 rounded-bl-none">
-                                <span className="animate-pulse">Thinking...</span>
-                            </div>
-                        </div>
-                    )}
-                    <div ref={messagesEndRef} />
+                            Start Free Trial <ArrowRight className="w-5 h-5" />
+                        </Link>
+                        <Link
+                            href="/dashboard/chat"
+                            className="w-full sm:w-auto px-8 py-4 bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-xl font-semibold text-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all"
+                        >
+                            View Demo
+                        </Link>
+                    </div>
                 </div>
-            </main>
 
-            {/* Input Area */}
-            <footer className="p-4 border-t border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-                <div className="max-w-3xl mx-auto">
-                    <form onSubmit={handleSubmit} className="flex gap-3 items-end">
+                {/* Background Decor */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 opacity-30 pointer-events-none">
+                    <div className="absolute top-20 left-1/4 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-screen animate-blob"></div>
+                    <div className="absolute top-40 right-1/4 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl mix-blend-multiply dark:mix-blend-screen animate-blob animation-delay-2000"></div>
+                </div>
+            </section>
 
-                        {/* File Upload */}
-                        <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={uploading || loading}
-                            className="p-3 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-xl text-gray-500 transition-colors disabled:opacity-50"
-                            title="Upload file (PDF, Docs, Images)"
-                        >
-                            {uploading ? (
-                                <span className="animate-spin block">⏳</span>
-                            ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
-                                </svg>
-                            )}
-                        </button>
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            onChange={handleFileUpload}
-                            accept=".pdf,.doc,.docx,.txt,.md,.odt,.rtf,.csv,.xls,.xlsx,.tsv,.ppt,.pptx,.html,.epub,.eml,.msg,.jpg,.jpeg,.png,.bmp,.tiff,.heic,.mp3,.wav,.m4a"
-                        />
+            {/* Features Section */}
+            <section className="py-24 bg-zinc-50 dark:bg-zinc-900/50">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl font-bold mb-4">Unify Your Data Experience</h2>
+                        <p className="text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
+                            Pilaw handles every format your business relies on. From legal contracts to design mockups and meeting recordings.
+                        </p>
+                    </div>
 
-                        {/* Text Input */}
-                        <div className="flex-1 bg-gray-100 dark:bg-zinc-800 rounded-xl flex items-center px-4 py-2">
-                            <input
-                                type="text"
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                placeholder="Ask anything..."
-                                className="w-full bg-transparent border-none focus:ring-0 outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400"
-                                disabled={loading}
-                            />
+                    <div className="grid md:grid-cols-3 gap-8">
+                        {/* Feature 1 */}
+                        <div className="group p-8 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300">
+                            <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 mb-6 group-hover:scale-110 transition-transform">
+                                <FileText className="w-7 h-7" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-3">Document Intelligence</h3>
+                            <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                Upload PDF, DOCX, and TXT files. Our RAG engine indexes every paragraph, making your knowledge base instantly searchable and chat-ready.
+                            </p>
                         </div>
 
-                        {/* Send Button */}
-                        <button
-                            type="submit"
-                            disabled={!input.trim() || loading}
-                            className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-600/20 transition-all disabled:opacity-50 disabled:shadow-none"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-                            </svg>
-                        </button>
-                    </form>
+                        {/* Feature 2 */}
+                        <div className="group p-8 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 hover:border-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300">
+                            <div className="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-purple-600 dark:text-purple-400 mb-6 group-hover:scale-110 transition-transform">
+                                <ImageLinkIcon className="w-7 h-7" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-3">Visual Understanding</h3>
+                            <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                Don't just read text. Pilaw 'sees' your images, charts, and diagrams using advanced OCR, making visual data accessible to the AI.
+                            </p>
+                        </div>
 
-                    <div className="text-center mt-2">
-                        <p className="text-xs text-gray-400">Supported: Docs, Tables, Slides, Images</p>
+                        {/* Feature 3 */}
+                        <div className="group p-8 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300">
+                            <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-6 group-hover:scale-110 transition-transform">
+                                <Mic className="w-7 h-7" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-3">Audio Transcription</h3>
+                            <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                Record meetings or upload audio files. We use Whisper to transcribe speech to text, adding a new dimension to your knowledge retrieval.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Trusted By / Social Proof (Mock) */}
+            <section className="py-20 border-y border-zinc-200 dark:border-zinc-800">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                    <p className="text-sm font-semibold uppercase tracking-wider text-zinc-500 mb-8">Trusted by industry leaders</p>
+                    <div className="flex flex-wrap justify-center items-center gap-12 opacity-50 grayscale hover:grayscale-0 transition-all">
+                        {/* Simple Text Logos for demo */}
+                        <span className="text-2xl font-bold text-zinc-800 dark:text-zinc-200">Acme Corp</span>
+                        <span className="text-2xl font-bold text-zinc-800 dark:text-zinc-200">GlobalBank</span>
+                        <span className="text-2xl font-bold text-zinc-800 dark:text-zinc-200">TechStart</span>
+                        <span className="text-2xl font-bold text-zinc-800 dark:text-zinc-200">LegalEase</span>
+                        <span className="text-2xl font-bold text-zinc-800 dark:text-zinc-200">MediCare</span>
+                    </div>
+                </div>
+            </section>
+
+            {/* CTA Section */}
+            <section className="py-32 relative overflow-hidden">
+                <div className="absolute inset-0 bg-blue-600 -skew-y-3 origin-bottom-right transform"></div>
+                <div className="max-w-4xl mx-auto px-6 relative z-10 text-center text-white">
+                    <h2 className="text-4xl font-bold mb-6">Ready to transform your workflow?</h2>
+                    <p className="text-blue-100 text-lg mb-10 max-w-2xl mx-auto">
+                        Join hundreds of enterprises utilizing Pilaw to secure and query their proprietary data.
+                    </p>
+                    <Link
+                        href="/dashboard/chat"
+                        className="inline-flex items-center justify-center px-8 py-4 bg-white text-blue-600 rounded-xl font-bold text-lg hover:bg-zinc-100 transition-colors shadow-xl"
+                    >
+                        Get Started Now
+                    </Link>
+                    <div className="mt-8 flex items-center justify-center gap-6 text-blue-200 text-sm">
+                        <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4" /> No credit card required</span>
+                        <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4" /> Enterprise security</span>
+                    </div>
+                </div>
+            </section>
+
+            {/* Footer */}
+            <footer className="py-12 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
+                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-zinc-900 dark:bg-white rounded flex items-center justify-center text-white dark:text-zinc-900 font-bold text-xs">P</div>
+                        <span className="font-bold tracking-tight">Pilaw</span>
+                    </div>
+                    <p className="text-zinc-500 text-sm">
+                        © 2026 Pilaw Inc. All rights reserved.
+                    </p>
+                    <div className="flex gap-6 text-sm text-zinc-600 dark:text-zinc-400">
+                        <a href="#" className="hover:text-blue-600">Privacy</a>
+                        <a href="#" className="hover:text-blue-600">Terms</a>
+                        <a href="#" className="hover:text-blue-600">Contact</a>
                     </div>
                 </div>
             </footer>
-
         </div>
     );
+}
+
+// Icon Helper
+function ImageLinkIcon({ className }: { className?: string }) {
+    return <ImageIcon className={className} />;
 }

@@ -1,5 +1,6 @@
 # Pilaw - RAG Chat Application
 
+![Home Page](public/home-page.png)
 ![Project Preview](public/project-preview.png)
 
 ## 🚀 Overview
