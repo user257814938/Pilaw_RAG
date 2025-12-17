@@ -2,7 +2,7 @@ import { streamText, convertToCoreMessages, convertToModelMessages, UIMessage } 
 import { gateway } from '@ai-sdk/gateway'; // Requires @ai-sdk/gateway
 import { getRetriever } from '@/lib/framework_langchain/ingest_retrieve';
 import { DEFAULT_MODEL_ID } from '@/lib/llm_ai-gateway/model_selection';
-import { SYSTEM_PROMPT } from '@/lib/llm_ai-gateway/system_prompt';
+import { PILAW_EXPERT_SYSTEM_PROMPT as SYSTEM_PROMPT } from '@/lib/elevenlabs/system_prompt';
 
 export const maxDuration = 30;
 
