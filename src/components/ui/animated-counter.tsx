@@ -20,7 +20,7 @@ export function AnimatedCounter({
         damping: 60,
         stiffness: 100,
     });
-    const isInView = useInView(ref, { once: true, margin: "-100px" });
+    const isInView = useInView(ref, { once: true });
 
     useEffect(() => {
         if (isInView) {
@@ -38,5 +38,5 @@ export function AnimatedCounter({
         });
     }, [springValue, format]);
 
-    return <span ref={ref} />;
+    return <span ref={ref}>{Intl.NumberFormat("en-US", format).format(direction === "down" ? value : 0)}</span>;
 }
