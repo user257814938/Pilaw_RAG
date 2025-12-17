@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-export function PricingTable() {
+export function PricingTable({ currentPlan }: { currentPlan?: string }) {
     const [loading, setLoading] = useState<string | null>(null);
 
     const handleCheckout = async (priceId: string) => {
@@ -38,64 +38,88 @@ export function PricingTable() {
     };
 
     return (
-        <div className="grid gap-8 lg:grid-cols-3">
-            {subscriptionPlans.map((plan) => (
-                <Card
-                    key={plan.name}
-                    className={cn(
-                        "relative flex flex-col transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl",
-                        plan.popular
-                            ? "border-blue-500 shadow-blue-500/20 scale-105 z-10 bg-white dark:bg-zinc-900"
-                            : "border-zinc-200 dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-700 bg-white dark:bg-zinc-900/50"
-                    )}
-                >
-                    {plan.popular && (
-                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-blue-600 to-blue-500 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-lg">
-                            Recommended
-                        </div>
-                    )}
+        <div className="grid md:grid-cols-3 gap-8">
+            {subscriptionPlans.map((plan) => {
+                const isPro = plan.name === "Pro";
+                // For billing dashboard, we likely don't want "Enterprise" to capture "Scale" logic unless specified.
+                // But mimicking public page logic:
+                const isEnterprise = plan.name === "Scale" || plan.name === "Enterprise";
 
-                    <CardHeader>
-                        <CardTitle className="text-2xl font-bold flex items-center justify-between">
-                            {plan.name}
-                        </CardTitle>
-                        <CardDescription className="text-zinc-500 h-10">{plan.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-1">
-                        <div className="mb-8">
-                            <span className="text-5xl font-extrabold tracking-tight text-zinc-900 dark:text-white">{plan.price}</span>
-                            <span className="text-zinc-500 font-medium ml-1">/month</span>
+                // Check if this is the active plan (case-insensitive for safety)
+                const isActive = currentPlan?.toLowerCase() === plan.name.toLowerCase();
+
+                return (
+                    <div
+                        key={plan.priceId}
+                        className={`
+                            rounded-3xl p-8 flex flex-col transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl
+                            ${isPro
+                                ? "bg-zinc-900 dark:bg-white border border-zinc-900 dark:border-white shadow-xl relative overflow-hidden transform md:-translate-y-4 hover:-translate-y-6"
+                                : "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm"
+                            }
+                            ${isActive ? "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-zinc-950 px-8" : ""}
+                        `}
+                    >
+                        {isPro && (
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                        )}
+
+                        <div className="flex justify-between items-start mb-2">
+                            <h3 className={`text-2xl font-bold ${isPro ? "text-white dark:text-zinc-900" : ""}`}>
+                                {plan.name}
+                            </h3>
+                            {isActive && (
+                                <span className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wide">
+                                    Current
+                                </span>
+                            )}
                         </div>
-                        <ul className="space-y-4">
-                            {plan.features.map((feature) => (
-                                <li key={feature} className="flex items-start gap-3">
-                                    <div className="mt-1 h-5 w-5 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                                        <Check className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+
+                        <p className={`mb-6 ${isPro ? "text-zinc-400 dark:text-zinc-600" : "text-zinc-500 dark:text-zinc-400"}`}>
+                            {plan.description}
+                        </p>
+
+                        <div className={`text-4xl font-extrabold mb-8 flex items-baseline ${isPro ? "text-white dark:text-zinc-900" : ""}`}>
+                            {plan.price}<span className="text-lg font-normal text-zinc-500 ml-1">/mo</span>
+                        </div>
+
+                        <ul className={`space-y-4 mb-8 flex-1 ${isPro ? "text-zinc-300 dark:text-zinc-700" : ""}`}>
+                            {plan.features.map((feature, i) => (
+                                <li key={i} className="flex items-center gap-3 text-sm">
+                                    <div className={`mt-0.5 h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${isPro ? "bg-white/10 dark:bg-black/5" : "bg-blue-100 dark:bg-blue-900/30"}`}>
+                                        <Check className={`h-3 w-3 ${isPro ? "text-blue-400 dark:text-blue-600" : "text-blue-600"}`} />
                                     </div>
-                                    <span className="text-sm text-zinc-600 dark:text-zinc-300">{feature}</span>
+                                    {feature}
                                 </li>
                             ))}
                         </ul>
-                    </CardContent>
-                    <CardFooter>
+
                         <Button
                             className={cn(
                                 "w-full py-6 text-lg font-semibold rounded-xl transition-all shadow-md hover:shadow-lg",
-                                plan.popular
+                                isPro
                                     ? "bg-blue-600 hover:bg-blue-700 text-white"
-                                    : "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                                    : "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700",
+                                isActive && "opacity-50 cursor-not-allowed"
                             )}
-                            onClick={() => handleCheckout(plan.priceId)}
-                            disabled={loading === plan.priceId}
+                            onClick={() => !isActive && !isEnterprise && handleCheckout(plan.priceId)}
+                            disabled={loading === plan.priceId || isActive || isEnterprise}
                         >
                             {loading === plan.priceId ? (
                                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
                             ) : null}
-                            {loading === plan.priceId ? "Processing..." : `Choose ${plan.name}`}
+                            {isActive
+                                ? "Current Plan"
+                                : isEnterprise
+                                    ? "Contact Sales"
+                                    : loading === plan.priceId
+                                        ? "Processing..."
+                                        : `Choose ${plan.name}`
+                            }
                         </Button>
-                    </CardFooter>
-                </Card>
-            ))}
+                    </div>
+                );
+            })}
         </div>
     );
 }

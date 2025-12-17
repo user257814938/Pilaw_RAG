@@ -1,8 +1,33 @@
 import { PricingTable } from "@/components/payment_stripe/pricing";
 import { BillingSettings } from "@/components/payment_stripe/billing";
 import { BadgeCheck, Zap, Shield } from "lucide-react";
+import { createClient } from "@/lib/database_supabase/server";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function BillingPage() {
+export default async function BillingPage() {
+    const cookieStore = await cookies();
+    const supabase = await createClient(cookieStore);
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        redirect("/auth_supabase/signin");
+    }
+
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("billing_plan")
+        .eq("id", user.id)
+        .single();
+
+    // Default to 'Free' if null or fallback
+    const currentPlan = profile?.billing_plan || "Free";
+
+    // Capitalize first letter for display (e.g. "free" -> "Free")
+    const displayPlan = currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1);
+
+
     return (
         <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950/50 pb-20">
             {/* Hero Header */}
@@ -27,7 +52,7 @@ export default function BillingPage() {
                     <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                         <BadgeCheck className="w-5 h-5 text-blue-600" /> Your Subscription
                     </h2>
-                    <BillingSettings />
+                    <BillingSettings planName={displayPlan} />
                 </div>
 
                 {/* Pricing Cards */}
@@ -36,7 +61,7 @@ export default function BillingPage() {
                         <h2 className="text-3xl font-bold mb-4">Transparent Pricing</h2>
                         <p className="text-zinc-500">No hidden fees. Simple billing.</p>
                     </div>
-                    <PricingTable />
+                    <PricingTable currentPlan={displayPlan} />
                 </div>
 
                 {/* FAQ / Trust Section */}
