@@ -19,6 +19,9 @@ export default function LayoutWrapper({
     const isServicesPage = pathname === "/services";
     const isSectorsPage = pathname === "/sectors";
     const isContactPage = pathname === "/contact";
+    const isPrivacyPage = pathname === "/privacy";
+    const isTermsPage = pathname === "/terms";
+    const isPricingPage = pathname === "/pricing";
 
     if (isChatPage) {
         return <>{children}</>;
@@ -26,8 +29,8 @@ export default function LayoutWrapper({
 
 
 
-    // Home Page, Services, Sectors & Contact: Header ONLY (Footer handled manually or PublicFooter)
-    if (isHomePage || isServicesPage || isSectorsPage || isContactPage) {
+    // Home Page, Services, Sectors, Contact, Privacy, Terms & Pricing: Header ONLY (Footer handled manually or PublicFooter)
+    if (isHomePage || isServicesPage || isSectorsPage || isContactPage || isPrivacyPage || isTermsPage || isPricingPage) {
         return (
             <div className="relative flex min-h-screen flex-col bg-background">
                 <div className="flex justify-center pt-4 mb-2">

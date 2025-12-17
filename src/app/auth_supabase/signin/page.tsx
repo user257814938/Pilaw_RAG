@@ -1,4 +1,4 @@
-import { AuthForm } from '@/components/auth_supabase/auth';
+import { AuthForm } from '@/components/(auth_supabase)/auth';
 
 export default function LoginPage() {
     return (
