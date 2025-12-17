@@ -35,17 +35,16 @@ export function Footer() {
 
                 {/* Links */}
                 <div className="flex items-center gap-6 text-sm font-medium text-blue-100">
-                    <Link href="#" className="group relative transition-colors hover:text-white">
+                    <Link href="/privacy" className="group relative transition-colors hover:text-white">
                         Privacy
                         <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-white transition-all group-hover:w-full"></span>
                     </Link>
-                    <Link href="#" className="group relative transition-colors hover:text-white">
+                    <Link href="/terms" className="group relative transition-colors hover:text-white">
                         Terms
                         <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-white transition-all group-hover:w-full"></span>
                     </Link>
-                    <Link href="/contact" className="group relative transition-colors hover:text-white">
+                    <Link href="/contact" className="bg-white text-blue-600 rounded-full px-4 py-1.5 font-bold hover:bg-blue-50 transition-colors shadow-sm">
                         Contact
-                        <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-white transition-all group-hover:w-full"></span>
                     </Link>
                 </div>
             </div>

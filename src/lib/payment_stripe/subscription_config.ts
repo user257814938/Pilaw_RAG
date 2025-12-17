@@ -12,7 +12,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
         name: 'Starter',
         description: 'Perfect for individuals and small teams getting started with RAG technology',
         priceId: 'price_1SfO4lCBrsPCUxy5brM6v1Ne',
-        price: '25,00$',
+        price: '25$',
         features: [
             'Unlimited messages',
             '100 documents',
@@ -23,7 +23,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
         name: 'Pro',
         description: 'Ideal for growing teams and businesses with advanced RAG requirements',
         priceId: 'price_1SfO4jCBrsPCUxy5vGZ0Z5zT',
-        price: '50,00$',
+        price: '50$',
         features: [
             'Unlimited messages',
             '1,000 documents',
@@ -36,7 +36,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
         name: 'Scale',
         description: 'Enterprise-grade solution for large organizations with maximum performance and scalability',
         priceId: 'price_1SfO4gCBrsPCUxy5FdrPMGoB',
-        price: '500,00$',
+        price: '500$',
         features: [
             'Unlimited messages',
             '30,000 documents',
