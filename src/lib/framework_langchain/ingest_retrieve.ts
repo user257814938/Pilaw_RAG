@@ -5,9 +5,7 @@ import { SupabaseVectorStore } from '@langchain/community/vectorstores/supabase'
 import { supabaseAdmin } from '../database_supabase/admin';
 import { createClient } from '../database_supabase/client';
 import { DEFAULT_EMBEDDING_MODEL_ID } from '../llm_ai-gateway/model_selection';
-// import { ContextualCompressionRetriever } from "langchain/retrievers";
-// import { SupabaseHybridSearch } from "@langchain/community/retrievers/supabase";
-// import { cohereReranker } from '@/lib/rerank_cohere';
+import { cohereReranker } from '@/lib/rerank_cohere';
 
 /**
  * Custom Embeddings Wrapper for Vercel AI SDK Gateway
