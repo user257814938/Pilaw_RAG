@@ -1,6 +1,37 @@
 import { UnstructuredLoader } from "@langchain/community/document_loaders/fs/unstructured";
 import { UnstructuredDirectoryLoader } from "@langchain/community/document_loaders/fs/unstructured";
 
+// --- OCR CLEANING UTILITY ---
+function isNoise(text: string): boolean {
+    const trimmed = text.trim();
+    if (trimmed.length < 3) return false; // Keep short meaningful words like "AI"
+
+    // Calculate ratio based on NON-SPACE characters only
+    // This prevents "spaced garbage" (e.g. "= B | I %") from passing the test
+    const contentWithoutSpaces = trimmed.replace(/\s/g, "");
+    if (contentWithoutSpaces.length === 0) return true;
+
+    const alphaNumeric = contentWithoutSpaces.replace(/[^a-zA-Z0-9]/g, "").length;
+    const total = contentWithoutSpaces.length;
+
+    // If more than 30% of the actual content is non-alphanumeric, it's noise.
+    // (Stricter threshold: 0.4 -> 0.3)
+    const noiseRatio = 1 - (alphaNumeric / total);
+    return noiseRatio > 0.3;
+}
+
+function cleanDocuments(docs: any[]): any[] {
+    return docs.map((doc) => {
+        const cleanContent = doc.pageContent
+            .split('\n')
+            .filter((line: string) => !isNoise(line))
+            .join('\n');
+
+        doc.pageContent = cleanContent;
+        return doc;
+    });
+}
+
 /**
  * Loads a file using Unstructured and LangChain.
  * Returns a list of LangChain Documents.
@@ -12,14 +43,15 @@ export async function ingestFile(filePath: string) {
 
     const loader = new UnstructuredLoader(filePath, {
         apiKey: process.env.UNSTRUCTURED_API_KEY,
-        apiUrl: process.env.UNSTRUCTURED_API_URL, // Defaults to SaaS URL if undefined
+        apiUrl: process.env.UNSTRUCTURED_API_URL,
         strategy: "hi_res",
-        chunkingStrategy: "by_title", // Optimal for legal docs to respect structure
-        // coordinates: true, // Enable if UI needs bounding boxes later
+        chunkingStrategy: "by_title",
+        // @ts-ignore - LangChain types might lag behind, but API accepts it
+        // languages: ["eng"], // Force English OCR to reduce noise (REVERTED: Suspected cause of failure)
     });
 
     const docs = await loader.load();
-    return docs;
+    return cleanDocuments(docs);
 }
 
 /**
@@ -39,7 +71,7 @@ export async function ingestDirectory(directoryPath: string) {
     });
 
     const docs = await loader.load();
-    return docs;
+    return cleanDocuments(docs);
 }
 
 /**

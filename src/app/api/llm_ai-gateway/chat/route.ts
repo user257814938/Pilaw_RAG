@@ -57,11 +57,14 @@ export async function POST(req: Request) {
             const redis = getRedisClient();
             const cachedResponse = await redis.get(cacheKey);
 
+            /* DISABLE CACHE FOR RAG ACCURACY
             if (cachedResponse && typeof cachedResponse === 'string') {
                 console.log(`⚡ CACHE HIT for key: ${cacheKey}`);
                 cacheHit = true;
-                cachedContentLength = cachedResponse.length;
+                // cachedContentLength = cachedResponse.length; 
+                return new Response(cachedResponse);
             }
+            */
         } catch (e: any) {
             console.error("Redis Cache Read Failed:", e);
         }
@@ -110,10 +113,8 @@ export async function POST(req: Request) {
         });
 
         // 4. Return Stream
-        return result.toUIMessageStreamResponse({
-            sendSources: true,
-            sendReasoning: true
-        });
+        // 4. Return Raw Text Stream (Simpler for manual fetch)
+        return result.toTextStreamResponse();
 
     } catch (error: any) {
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });

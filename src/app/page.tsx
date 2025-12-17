@@ -1,222 +1,219 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-// Using simple unicode character if lucide is not desired, but user likely has it. 
-// Reverting to simple Emoji/Text to minimize dependency issues unless confirmed.
-// Actually, earlier files used lucide-react. I'll use it for a polished look if possible, otherwise emoji.
-// Let's stick to text/emoji for "Simple interface" to avoid "Module not found" if I'm unlucky, 
-// but wait, I installed sonner earlier, likely lucide is there too.
-// I'll check package.json first? No, let's just use text/emoji for maximum safety and simplicity as requested.
-// "📎" is perfect.
+import { toast } from "sonner"
+import { nanoid } from "nanoid";
 
-export default function Home() {
-  const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+export default function Chat() {
+    const [messages, setMessages] = useState<any[]>([
+        { role: "assistant", content: "Hello! I am Pilaw, your global assistant. How can I help you today?" }
+    ]);
+    const [input, setInput] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
-    setUploading(true);
-    // Optimistic message
-    setMessages(prev => [...prev, { role: "assistant", content: `📂 Uploading ${file.name}...` }]);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!input.trim() || loading) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
+        const userMessage = { role: "user", content: input };
+        setMessages((prev) => [...prev, userMessage]);
+        setInput("");
+        setLoading(true);
 
-    try {
-      const response = await fetch("/api/ingestion_unstructured", {
-        method: "POST",
-        body: formData,
-      });
+        try {
+            const response = await fetch("/api/llm_ai-gateway/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messages: [...messages, userMessage] }),
+            });
 
-      if (!response.ok) throw new Error("Upload failed");
+            if (!response.body) throw new Error("No response body");
 
-      const data = await response.json();
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let assistantMessage = { role: "assistant", content: "" };
 
-      setMessages(prev => {
-        const newMsgs = [...prev];
-        // Replace last "Uploading..." message or add new one
-        newMsgs[newMsgs.length - 1] = {
-          role: "assistant",
-          content: `✅ File "${file.name}" uploaded and indexed successfully.`
-        };
-        return newMsgs;
-      });
+            setMessages((prev) => [...prev, assistantMessage]);
 
-    } catch (error) {
-      console.error("Upload error:", error);
-      setMessages(prev => [...prev, { role: "assistant", content: `❌ Error uploading file: ${file.name}` }]);
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || loading) return;
+                const chunk = decoder.decode(value);
+                assistantMessage.content += chunk;
 
-    const userMessage = { role: "user" as const, content: input.trim() };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setLoading(true);
-
-    try {
-      const response = await fetch("/api/llm_ai-gateway/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [...messages, userMessage],
-          model: "openai/gpt-4o",
-          webSearch: false,
-        }),
-      });
-
-      if (!response.ok) throw new Error("API call failed");
-      if (!response.body) return;
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      // Initialize assistant message
-      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const dataStr = line.slice(6).trim();
-            if (dataStr === "[DONE]") continue;
-
-            try {
-              const data = JSON.parse(dataStr);
-
-              if (data.type === "text-delta" && data.delta) {
                 setMessages((prev) => {
-                  const newMessages = [...prev];
-                  const lastIndex = newMessages.length - 1;
-                  const lastMsg = { ...newMessages[lastIndex] };
-                  if (lastMsg.role === "assistant") {
-                    lastMsg.content += data.delta;
-                    newMessages[lastIndex] = lastMsg;
-                  }
-                  return newMessages;
+                    const newMessages = [...prev];
+                    newMessages[newMessages.length - 1] = { ...assistantMessage };
+                    return newMessages;
                 });
-              }
-            } catch (e) {
-              // Skip invalid JSON or markers
             }
-          }
+        } catch (error) {
+            console.error("Chat error:", error);
+            toast.error("Failed to send message");
+        } finally {
+            setLoading(false);
         }
-      }
-    } catch (error) {
-      console.error("Chat error:", error);
-      setMessages((prev) => [...prev, { role: "assistant", content: "Error: Something went wrong." }]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  return (
-    <main className="flex h-screen flex-col items-center justify-center bg-gray-100 p-4 dark:bg-zinc-900">
-      <div className="w-full max-w-3xl flex flex-col h-[800px] bg-white rounded-xl shadow-xl overflow-hidden dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700">
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
 
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50">
-          <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Simple Chat + Upload</h1>
+        setUploading(true);
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await fetch("/api/ingestion_unstructured", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) throw new Error("Upload failed");
+
+            const data = await response.json();
+            toast.success(`File uploaded: ${file.name}`);
+            console.log("Indexed documents:", data.documents);
+
+            // Add system message about upload
+            setMessages(prev => [...prev, {
+                role: "assistant",
+                content: `✅ I have processed the file "${file.name}". You can now ask questions about it!`
+            }]);
+
+        } catch (error) {
+            console.error("Upload error:", error);
+            toast.error("Failed to upload file");
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-screen bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-gray-100 font-sans">
+
+            {/* Header */}
+            <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 z-10">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                        P
+                    </div>
+                    <h1 className="text-xl font-bold tracking-tight">Pilaw Chat</h1>
+                </div>
+                <div className="text-xs text-gray-500">v1.0 • RAG Enabled</div>
+            </header>
+
+            {/* Chat Area */}
+            <main className="flex-1 overflow-y-auto p-4 sm:p-6 scroll-smooth">
+                <div className="max-w-3xl mx-auto space-y-6">
+
+                    {messages.length === 0 && (
+                        <div className="text-center text-gray-400 mt-20">
+                            <p className="text-6xl mb-4">👋</p>
+                            <p>Type a message to start chatting...</p>
+                            <p className="text-sm">Or upload a document to ask questions about it.</p>
+                        </div>
+                    )}
+
+                    {messages.map((msg, i) => (
+                        <div
+                            key={i}
+                            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                        >
+                            <div
+                                className={`max-w-[80%] rounded-2xl px-4 py-2 ${msg.role === "user"
+                                    ? "bg-blue-600 text-white rounded-br-none"
+                                    : "bg-gray-200 dark:bg-zinc-700 text-gray-800 dark:text-gray-100 rounded-bl-none"
+                                    }`}
+                            >
+                                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                            </div>
+                        </div>
+                    ))}
+
+                    {loading && messages[messages.length - 1]?.role === "user" && (
+                        <div className="flex justify-start">
+                            <div className="bg-gray-200 dark:bg-zinc-700 rounded-2xl px-4 py-2 rounded-bl-none">
+                                <span className="animate-pulse">Thinking...</span>
+                            </div>
+                        </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                </div>
+            </main>
+
+            {/* Input Area */}
+            <footer className="p-4 border-t border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                <div className="max-w-3xl mx-auto">
+                    <form onSubmit={handleSubmit} className="flex gap-3 items-end">
+
+                        {/* File Upload */}
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploading || loading}
+                            className="p-3 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-xl text-gray-500 transition-colors disabled:opacity-50"
+                            title="Upload file (PDF, Docs, Images)"
+                        >
+                            {uploading ? (
+                                <span className="animate-spin block">⏳</span>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
+                                </svg>
+                            )}
+                        </button>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            onChange={handleFileUpload}
+                            accept=".pdf,.doc,.docx,.txt,.md,.odt,.rtf,.csv,.xls,.xlsx,.tsv,.ppt,.pptx,.html,.epub,.eml,.msg,.jpg,.jpeg,.png,.bmp,.tiff,.heic,.mp3,.wav,.m4a"
+                        />
+
+                        {/* Text Input */}
+                        <div className="flex-1 bg-gray-100 dark:bg-zinc-800 rounded-xl flex items-center px-4 py-2">
+                            <input
+                                type="text"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder="Ask anything..."
+                                className="w-full bg-transparent border-none focus:ring-0 outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                                disabled={loading}
+                            />
+                        </div>
+
+                        {/* Send Button */}
+                        <button
+                            type="submit"
+                            disabled={!input.trim() || loading}
+                            className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-600/20 transition-all disabled:opacity-50 disabled:shadow-none"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                            </svg>
+                        </button>
+                    </form>
+
+                    <div className="text-center mt-2">
+                        <p className="text-xs text-gray-400">Supported: Docs, Tables, Slides, Images</p>
+                    </div>
+                </div>
+            </footer>
+
         </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
-          {messages.length === 0 && (
-            <div className="flex h-full items-center justify-center text-gray-400 flex-col gap-2">
-              <p>Type a message to start chatting...</p>
-              <p className="text-sm">Or upload a document to ask questions about it.</p>
-            </div>
-          )}
-
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2 ${msg.role === "user"
-                    ? "bg-blue-600 text-white rounded-br-none"
-                    : "bg-gray-200 dark:bg-zinc-700 text-gray-800 dark:text-gray-100 rounded-bl-none"
-                  }`}
-              >
-                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-              </div>
-            </div>
-          ))}
-
-          {loading && messages[messages.length - 1]?.role === "user" && (
-            <div className="flex justify-start">
-              <div className="bg-gray-200 dark:bg-zinc-700 rounded-2xl px-4 py-2 rounded-bl-none">
-                <span className="animate-pulse">Thinking...</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Input */}
-        <div className="p-4 border-t border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
-          <form onSubmit={handleSubmit} className="flex gap-2 items-center">
-
-            {/* File Upload Button */}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading || loading}
-              className="p-3 bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 rounded-lg text-gray-600 dark:text-gray-200 transition-colors disabled:opacity-50"
-              title="Upload file"
-            >
-              {uploading ? "⏳" : "📎"}
-            </button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              onChange={handleFileUpload}
-              accept=".pdf,.txt,.md,.docx"
-            />
-
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 bg-transparent text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={loading}
-            />
-            <button
-              type="submit"
-              disabled={loading || !input.trim()}
-              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Send
-            </button>
-          </form>
-        </div>
-      </div>
-    </main>
-  );
+    );
 }
