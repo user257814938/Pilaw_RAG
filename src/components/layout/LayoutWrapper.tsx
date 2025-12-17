@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
+import Script from "next/script";
 
 export default function LayoutWrapper({
     children,
@@ -29,7 +30,7 @@ export default function LayoutWrapper({
 
 
 
-    // Home Page, Services, Sectors, Contact, Privacy, Terms & Pricing: Header ONLY (Footer handled manually or PublicFooter)
+    // Home Page, Services, Sectors, Contact, Privacy, Terms & Pricing: Header ONLY
     if (isHomePage || isServicesPage || isSectorsPage || isContactPage || isPrivacyPage || isTermsPage || isPricingPage) {
         return (
             <div className="relative flex min-h-screen flex-col bg-background">
@@ -46,6 +47,9 @@ export default function LayoutWrapper({
                 </div>
                 <Header />
                 <main className="flex-1">{children}</main>
+                {/* @ts-ignore */}
+                <elevenlabs-convai agent-id="agent_4601kcpkcfnpfnar52h2gd7whsv7"></elevenlabs-convai>
+                <Script src="https://unpkg.com/@elevenlabs/convai-widget-embed@beta" async type="text/javascript" />
             </div>
         );
     }
@@ -56,6 +60,9 @@ export default function LayoutWrapper({
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
+            {/* @ts-ignore */}
+            <elevenlabs-convai agent-id="agent_4601kcpkcfnpfnar52h2gd7whsv7"></elevenlabs-convai>
+            <Script src="https://unpkg.com/@elevenlabs/convai-widget-embed@beta" async type="text/javascript" />
         </div>
     );
 }
