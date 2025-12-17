@@ -7,29 +7,7 @@ export default function LandingPage() {
     return (
         <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans selection:bg-blue-100 dark:selection:bg-blue-900">
 
-            {/* Navigation */}
-            <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
-                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">P</div>
-                        <span className="text-xl font-bold tracking-tight">Pilaw</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Link
-                            href="/auth_supabase"
-                            className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                        >
-                            Log in
-                        </Link>
-                        <Link
-                            href="/auth_supabase"
-                            className="px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-medium rounded-full hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
-                        >
-                            Get Started
-                        </Link>
-                    </div>
-                </div>
-            </nav>
+            {/* Navigation handled by LayoutWrapper */}
 
             {/* Hero Section */}
             <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
@@ -153,7 +131,6 @@ export default function LandingPage() {
                     </div>
                 </div>
             </section>
-
             {/* Footer */}
             <footer className="py-12 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
@@ -172,6 +149,7 @@ export default function LandingPage() {
                 </div>
             </footer>
         </div>
+
     );
 }
 

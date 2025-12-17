@@ -8,48 +8,55 @@ export function Header() {
     const isDashboard = pathname?.startsWith("/dashboard");
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background">
-            <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4 md:px-8">
-                <div className="flex items-center gap-2">
-                    {isDashboard && (
-                        <Link href="/dashboard" className="flex items-center space-x-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900 font-bold">
-                                P
-                            </div>
-                            <span className="hidden font-bold sm:inline-block">Pilaw</span>
-                        </Link>
-                    )}
+        <header className="sticky top-6 z-50 w-full px-4 md:px-0">
+            <div className="mx-auto flex h-14 max-w-5xl items-center justify-between rounded-full border border-border/50 bg-background/80 px-6 shadow-md backdrop-blur-md ring-1 ring-white/10 supports-[backdrop-filter]:bg-background/60">
+                <div className="flex items-center gap-2 transition-transform hover:scale-105">
+                    <Link href={isDashboard ? "/dashboard" : "/"} className="flex items-center space-x-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-blue-600 text-white font-bold shadow-sm">
+                            P
+                        </div>
+                        <span className="hidden font-bold tracking-tight sm:inline-block">Pilaw</span>
+                    </Link>
                 </div>
 
-                <nav className="flex items-center gap-4">
+                <nav className="flex items-center gap-6">
                     {isDashboard ? (
                         <>
                             <Link
                                 href="/dashboard"
-                                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                                className="group relative text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                             >
                                 Dashboard
+                                <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-indigo-600 transition-all group-hover:w-full"></span>
                             </Link>
                             <Link
                                 href="/dashboard/chat"
-                                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                                className="group relative text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                             >
                                 Chat
+                                <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-indigo-600 transition-all group-hover:w-full"></span>
                             </Link>
                             <Link
                                 href="/dashboard/billing"
-                                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                                className="group relative text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                             >
                                 Billing
+                                <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-indigo-600 transition-all group-hover:w-full"></span>
                             </Link>
                         </>
                     ) : (
                         <>
                             <Link
                                 href="/auth_supabase/signin"
-                                className="hidden lg:inline-flex h-9 items-center justify-center rounded-md bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground shadow-sm transition-colors hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                             >
                                 Log in
+                            </Link>
+                            <Link
+                                href="/auth_supabase/signup"
+                                className="group relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-zinc-800 hover:ring-2 hover:ring-zinc-900 hover:ring-offset-2 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                            >
+                                <span className="relative z-10">Get Started</span>
                             </Link>
                         </>
                     )}
