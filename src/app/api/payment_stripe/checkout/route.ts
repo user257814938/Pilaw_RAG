@@ -39,7 +39,10 @@ export async function POST(req: Request) {
         }
 
         // Success and Cancel URLs
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        // Priority: Defined Site URL -> Vercel URL -> Localhost
+        const appUrl = process.env.NEXT_PUBLIC_SITE_URL
+            || process.env.NEXT_PUBLIC_APP_URL
+            || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
         const successUrl = `${appUrl}/dashboard/billing?session_id={CHECKOUT_SESSION_ID}`;
         const cancelUrl = `${appUrl}/dashboard/billing`;
 
