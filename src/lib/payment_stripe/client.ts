@@ -5,6 +5,6 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2024-12-18.acacia', // Use the latest API version or the one you are pinning to
+    apiVersion: '2024-12-18.acacia' as any, // Use the latest API version or the one you are pinning to
     typescript: true,
 });
