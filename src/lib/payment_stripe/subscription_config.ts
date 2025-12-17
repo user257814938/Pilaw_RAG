@@ -9,7 +9,7 @@ export type SubscriptionPlan = {
 
 export const subscriptionPlans: SubscriptionPlan[] = [
     {
-        name: 'Starter Plan',
+        name: 'Starter',
         description: 'Perfect for individuals and small teams getting started with RAG technology',
         priceId: 'price_1SfJeMCKgEFZ6loOMXX67HC1',
         price: '25,00$',
@@ -20,28 +20,29 @@ export const subscriptionPlans: SubscriptionPlan[] = [
         ],
     },
     {
-        name: 'Pro Plan',
+        name: 'Pro',
         description: 'Ideal for growing teams and businesses with advanced RAG requirements',
         priceId: 'price_1SfJfWCKgEFZ6loO3O24YFm2',
         price: '50,00$',
         features: [
             'Unlimited messages',
+            '1,000 documents',
             'Advanced AI models',
-            'Priority support',
             'Hybrid search',
         ],
         popular: true,
     },
     {
-        name: 'Scale Plan',
+        name: 'Scale',
         description: 'Enterprise-grade solution for large organizations with maximum performance and scalability',
         priceId: 'price_1SfJgqCKgEFZ6loOAbgtwNdm',
-        price: '100,00$',
+        price: '500,00$',
         features: [
             'Unlimited messages',
+            '30,000 documents',
             'Advanced AI models',
-            'Priority support',
             'Hybrid search',
+            'Priority support',
         ],
     },
 ];
