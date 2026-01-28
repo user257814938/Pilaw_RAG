@@ -6,6 +6,9 @@ Slides : https://gamma.app/docs/Pilaw-Votre-Cerveau-dEntreprise-Connecte-b9gmmj0
 
 ![Home Page](public/home-page.png)
 ![Project Preview](public/project-preview.png)
+
+## ✨ Workflow 
+
 ![Visual workflow](public/Visual-workflow.png)
 
 ## 🚀 Overview
